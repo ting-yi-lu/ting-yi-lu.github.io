@@ -1,0 +1,57 @@
+/* Top menu bar shared by every page (also used by the SED explorer page). */
+/* ---------- Top navigation (same on every page) ---------- */
+.site-header {
+  margin: 0;
+  position: sticky; top: 0; z-index: 1000;
+  background: #fff;                       /* fully opaque: page text no longer shows through */
+  border-bottom: 1px solid #e4e4e4;
+  font-family: "PT Sans", Arial, sans-serif;
+  font-weight: 400;
+  line-height: 1.3;
+}
+.site-header .bar {
+  max-width: 980px; margin: 0 auto; padding: 0 24px; min-height: 56px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.site-header .brand {
+  font-size: 19px; font-weight: 700; color: #212121; text-decoration: none; white-space: nowrap;
+}
+.site-nav > ul { list-style: none; margin: 0; padding: 0; display: flex; align-items: center; gap: 24px; }
+.site-nav a, .site-nav summary {
+  color: rgba(0, 0, 0, 0.62); text-decoration: none; font-size: 15px; cursor: pointer;
+  display: inline-block; padding: 6px 0 4px; border-bottom: 2px solid transparent; white-space: nowrap;
+}
+.site-nav a:hover, .site-nav summary:hover,
+.site-nav a[aria-current="page"], .site-nav .current > summary { color: #000; border-bottom-color: #000; }
+
+/* "Fun" drop-down (works with tap on phones and click on desktop) */
+.site-nav details { position: relative; }
+.site-nav summary { list-style: none; }
+.site-nav summary::-webkit-details-marker { display: none; }
+.site-nav summary::after {
+  content: ""; display: inline-block; margin-left: 6px; vertical-align: 3px;
+  border: 4px solid transparent; border-top-color: currentColor; border-bottom: 0;
+}
+.site-nav .menu {
+  position: absolute; right: 0; top: calc(100% + 8px); min-width: 220px;
+  list-style: none; margin: 0; padding: 6px 0;
+  background: #fff; border: 1px solid #e4e4e4; border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+.site-nav .menu a {
+  display: block; padding: 9px 16px; border: 0; color: #212121; white-space: normal;
+}
+.site-nav .menu a:hover, .site-nav .menu a[aria-current="page"] { background: #f3f4f6; }
+.site-nav .menu .soon { display: block; padding: 9px 16px; color: #9a9a9a; font-size: 14px; }
+
+@media (max-width: 760px) {
+  .site-header .bar { flex-direction: column; align-items: stretch; gap: 0; padding: 10px 16px 0; min-height: 0; }
+  .site-header .brand { padding-bottom: 4px; }
+  .site-nav > ul { gap: 18px; flex-wrap: wrap; row-gap: 0; }
+  .site-nav a, .site-nav summary { padding: 8px 0 8px; font-size: 15.5px; }
+  .site-nav .menu { right: auto; left: 0; }
+}
+/* The Fun menu is the last item; keep it inside the screen on very small phones */
+@media (max-width: 420px) {
+  .site-nav li:last-child .menu { left: auto; right: 0; }
+}

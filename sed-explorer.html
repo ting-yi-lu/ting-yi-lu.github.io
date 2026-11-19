@@ -1,0 +1,876 @@
+<!doctype html><html lang="en"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<title>High-z SED Explorer – Ting-Yi Lu</title>
+<meta name="description" content="Interactive multi-wavelength SED of a high-redshift galaxy and what each telescope can detect.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: control rail on the left, a two-panel "spectrum over coverage lanes" instrument chart on the right, reference table below. */
+:root{
+  --bg:#f4f6f9; --panel:#ffffff; --ink:#111823; --ink-2:#465163; --ink-3:#7c8697; --rule:#dde2ea; --grid:#edf0f5;
+  --accent:#2c3f9e; --accent-soft:#e6e9f7; --curve:#111823; --atm:#9aa5b5;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948;
+  --f-display:"Instrument Serif", Georgia, "Times New Roman", serif;
+  --f-body:"Instrument Sans", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0e1116; --panel:#151a21; --ink:#e7ebf1; --ink-2:#aab3c1; --ink-3:#7a8595; --rule:#29303b; --grid:#1d232c;
+  --accent:#8f9ef0; --accent-soft:#232a45; --curve:#e7ebf1; --atm:#5d6878;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#0ca30c; --s7:#9085e9; --s8:#e66767;
+  color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --bg:#0e1116; --panel:#151a21; --ink:#e7ebf1; --ink-2:#aab3c1; --ink-3:#7a8595; --rule:#29303b; --grid:#1d232c;
+  --accent:#8f9ef0; --accent-soft:#232a45; --curve:#e7ebf1; --atm:#5d6878;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#0ca30c; --s7:#9085e9; --s8:#e66767;
+  color-scheme:dark; }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.5}
+.wrap{max-width:1380px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{display:grid;gap:6px;margin-bottom:22px}
+.eyebrow{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(30px,4vw,44px);line-height:1.05;margin:0;text-wrap:balance}
+h1 em{font-style:italic;color:var(--accent)}
+.lede{max-width:72ch;color:var(--ink-2);margin:4px 0 0}
+.lede a{color:var(--accent)}
+.app{display:grid;grid-template-columns:310px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:1000px){.app{grid-template-columns:minmax(0,1fr)}}
+.rail{display:grid;gap:14px;position:sticky;top:max(12px,env(safe-area-inset-top,0px));max-height:calc(100vh - 24px);overflow:auto;padding-right:4px}
+@media (max-width:1000px){.rail{position:static;max-height:none;overflow:visible}}
+.box{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:14px 14px 12px}
+.box h2{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.box h2 button{font:inherit;letter-spacing:.04em;text-transform:none;font-size:11.5px;font-weight:500}
+.ctl{display:grid;gap:3px;margin-bottom:10px}
+.ctl:last-child{margin-bottom:0}
+.ctl label,.ctl .lab{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;color:var(--ink-2)}
+.ctl output,.val{font-family:var(--f-mono);font-size:12.5px;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.hint{font-size:11.5px;color:var(--ink-3);line-height:1.35}
+input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0}
+select,button{font-family:var(--f-body);font-size:13px;color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:4px 8px;cursor:pointer}
+button:hover,select:hover{border-color:var(--ink-3)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.big{font-family:var(--f-mono);font-size:22px;color:var(--ink)}
+.types{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.types label{display:block;border:1px solid var(--rule);border-radius:8px;padding:7px 8px;cursor:pointer;font-size:12.5px;line-height:1.25;color:var(--ink)}
+.types label small{display:block;color:var(--ink-3);font-size:11px;margin-top:2px}
+.types input{position:absolute;opacity:0;pointer-events:none}
+.types label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.types label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:1px}
+.mod{font-size:11px;color:var(--accent);font-weight:600}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);cursor:pointer;padding:2px 0}
+.chk input{accent-color:var(--accent);margin:0}
+.facs{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block;flex:none}
+.facs .tag{font-size:10.5px;color:var(--ink-3)}
+.main{display:grid;gap:14px;min-width:0}
+.plotcard{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:12px 12px 6px;min-width:0}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-bottom:8px;font-size:12.5px;color:var(--ink-2)}
+.toolbar .grp{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.toolbar .grp>span{margin-right:2px;color:var(--ink-3);font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.toolbar button{padding:3px 8px;font-size:12px}
+.svgwrap{overflow-x:auto;position:relative}
+#plot{display:block;width:100%;min-width:760px;height:auto;user-select:none;touch-action:pan-y}
+#plot text{font-family:var(--f-body)}
+#plot .mono{font-family:var(--f-mono)}
+.tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--rule);box-shadow:0 6px 24px rgba(0,0,0,.14);border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;max-width:310px;z-index:5;color:var(--ink)}
+.tip b{font-weight:600}
+.tip .k{color:var(--ink-3)}
+.tip .m{font-family:var(--f-mono);font-size:11.5px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--ink-2);padding:6px 2px 4px;align-items:center}
+.legend i{display:inline-block;width:20px;height:0;border-top:2px solid var(--curve);vertical-align:middle;margin-right:6px}
+.legend i.d{border-top-style:dashed}
+.legend button{font-size:11px;padding:1px 6px}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));background:var(--panel);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.stat{padding:9px 12px;box-shadow:1px 0 0 var(--grid),0 1px 0 var(--grid)}
+.stat .k{font-size:11px;color:var(--ink-3);letter-spacing:.03em}
+.stat .v{font-family:var(--f-mono);font-size:15px;font-variant-numeric:tabular-nums}
+.stat .u{font-size:11px;color:var(--ink-3)}
+.notes{font-size:12.5px;color:var(--ink-2);max-width:95ch}
+.notes p{margin:0 0 6px}
+section.tbl{margin-top:30px}
+section.tbl h2{font-family:var(--f-display);font-weight:400;font-size:30px;margin:0 0 4px}
+section.tbl .sub{color:var(--ink-2);max-width:80ch;margin:0 0 12px}
+.phlegend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--ink-2);margin-bottom:10px}
+.tscroll{overflow-x:auto;background:var(--panel);border:1px solid var(--rule);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:1080px;font-size:12.8px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--grid);vertical-align:top}
+thead th{position:sticky;top:0;background:var(--panel);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:700;border-bottom:1px solid var(--rule);z-index:1}
+tbody.g th{background:var(--bg);font-family:var(--f-display);font-weight:400;font-size:17px;color:var(--ink);padding:8px 10px;letter-spacing:0;text-transform:none}
+td.nm{white-space:nowrap;font-weight:600}
+td.nm .gl{display:inline-block;width:14px;color:var(--ink-3);font-weight:400}
+td.num{font-family:var(--f-mono);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}
+td.txt{color:var(--ink-2);min-width:200px;max-width:330px}
+.pr{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:1px 6px;border-radius:99px;border:1px solid var(--rule);color:var(--ink-3);margin-left:6px;vertical-align:1px}
+.pr.p1{border-color:var(--accent);color:var(--accent)}
+.route .fac{font-weight:600;font-family:var(--f-body)}
+.dim{color:var(--ink-3)}
+tr.off td{opacity:.55}
+.foot{margin-top:28px;font-size:12px;color:var(--ink-3);max-width:110ch}
+.foot p{margin:0 0 6px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/nav.css">
+<style>
+/* Site menu bar on top of the explorer */
+.rail{top:calc(57px + 12px)!important;max-height:calc(100vh - 81px)!important}
+@media (max-width:760px){.rail{top:auto!important}}
+</style>
+</head><body>
+  <header class="site-header">
+    <div class="bar">
+      <a class="brand" href="index.html">Ting-Yi Lu</a>
+      <nav class="site-nav" aria-label="Main">
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="cv.html">CV</a></li>
+          <li><a href="research.html">Research</a></li>
+          <li><a href="phd-thesis.html">PhD thesis</a></li>
+          <li>
+            <details class="current">
+              <summary>Fun</summary>
+              <ul class="menu">
+                <li><a href="sed-explorer.html" aria-current="page">High-z galaxy SED explorer</a></li>
+                <!-- Add new tools here, e.g.
+                <li><a href="bubble-probability.html">Probability of a galaxy in an R &gt; 1 pMpc bubble</a></li> -->
+              </ul>
+            </details>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Teaching widget · multi-wavelength view of a high-redshift galaxy</div>
+  <h1>What does each telescope see of a galaxy at <em id="hz">z = 7</em>?</h1>
+  <p class="lede">An interactive version of the classic “one SED, many facilities” figure (as in Fig. 2 of <a href="https://arxiv.org/abs/2609.22457" target="_blank" rel="noopener">Smit &amp; Bowler 2026, ARA&amp;A</a>). Pick a redshift, UV magnitude and galaxy type; the observed spectrum, emission lines, atmospheric windows and approximate instrument depths update together. Drag across the plot to zoom, double-click to reset.</p>
+</header>
+
+<div class="app">
+<aside class="rail" aria-label="Controls">
+  <div class="box">
+    <h2>Galaxy</h2>
+    <div class="ctl"><label for="z">Redshift <output id="zo"></output></label>
+      <input id="z" type="range" min="0.5" max="20" step="0.01" value="7">
+      <div class="hint" id="zhint"></div></div>
+    <div class="ctl"><label for="muv"><span>Observed M<sub>UV</sub> (1500 Å, AB)</span> <output id="muvo"></output></label>
+      <input id="muv" type="range" min="-24" max="-15" step="0.1" value="-21"></div>
+    <div class="ctl"><div class="lab">Galaxy type <span class="mod" id="modflag" hidden>modified</span></div>
+      <div class="types" id="types" role="radiogroup"></div></div>
+  </div>
+
+  <div class="box">
+    <h2>Physics <button id="reset" type="button">Reset to type</button></h2>
+    <div class="ctl"><label for="beta">UV slope β <output id="betao"></output></label><input id="beta" type="range" min="-3" max="1.5" step="0.05"></div>
+    <div class="ctl"><label for="fobs"><span>Dust-obscured SFR fraction</span> <output id="fobso"></output></label><input id="fobs" type="range" min="0" max="1000" step="1">
+      <div class="hint">Sets L<sub>IR</sub> and the attenuation of rest-UV/optical lines. Independent of β here, so you can break IRX–β on purpose.</div></div>
+    <div class="ctl"><label for="td">Dust temperature (z=0 equivalent) <output id="tdo"></output></label><input id="td" type="range" min="20" max="90" step="1"></div>
+    <div class="ctl"><label for="zm">Gas metallicity <output id="zmo"></output></label><input id="zm" type="range" min="-1.7" max="0.2" step="0.01"></div>
+    <div class="ctl"><label for="fesc">Lyα escape fraction (ISM) <output id="fesco"></output></label><input id="fesc" type="range" min="0" max="1" step="0.01"></div>
+    <div class="ctl"><label for="fwhm">Line width (FWHM) <output id="fwhmo"></output></label><input id="fwhm" type="range" min="1.7" max="3.6" step="0.01"></div>
+    <label class="chk"><input id="cmb" type="checkbox" checked> CMB heating &amp; contrast on dust (da Cunha+13)</label>
+  </div>
+
+  <div class="box">
+    <h2>Reionization (Lyα)</h2>
+    <label class="chk"><input id="xauto" type="checkbox" checked> Neutral fraction from a toy history</label>
+    <div class="ctl"><label for="xhi"><span>IGM neutral fraction x<sub>HI</sub></span> <output id="xhio"></output></label><input id="xhi" type="range" min="0" max="1" step="0.01" value="0.3"></div>
+    <div class="ctl"><label for="rb">Ionized bubble radius <output id="rbo"></output></label><input id="rb" type="range" min="-1.3" max="0.7" step="0.01" value="-0.3"></div>
+    <div class="ctl"><label for="dv">Lyα velocity offset <output id="dvo"></output></label><input id="dv" type="range" min="0" max="600" step="10" value="200">
+      <div class="hint">Damping-wing toy model: τ ≈ x<sub>HI</sub>·1700·[(1+z)/10]<sup>1.5</sup>/(Δv + H(z)R<sub>b</sub>). It also softens the continuum just redward of Lyα.</div></div>
+  </div>
+
+  <div class="box">
+    <h2>Observation</h2>
+    <div class="ctl"><label for="texp">On-source time <output id="texpo"></output></label><input id="texp" type="range" min="2.7" max="5.56" step="0.01" value="4"></div>
+    <div class="ctl"><label for="snr">Detection threshold</label>
+      <select id="snr"><option value="3">3σ</option><option value="5" selected>5σ</option><option value="10">10σ</option></select></div>
+    <div class="ctl"><label for="res">Spectral resolution drawn</label>
+      <select id="res"><option value="0" selected>Intrinsic line width</option><option value="3000">R ≈ 3000 (gratings, IFUs)</option><option value="1000">R ≈ 1000 (NIRSpec M gratings)</option><option value="100">R ≈ 100 (NIRSpec prism)</option></select></div>
+    <div class="ctl"><label for="pwv">Precipitable water vapour <output id="pwvo"></output></label><input id="pwv" type="range" min="0.3" max="4" step="0.05" value="1">
+      <div class="hint">Changes the sub-mm windows and scales ALMA/NOEMA noise relative to typical conditions for each band.</div></div>
+  </div>
+
+  <div class="box">
+    <h2>Facilities</h2>
+    <div class="facs" id="facs"></div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="plotcard">
+    <div class="toolbar">
+      <div class="grp" role="group" aria-label="Wavelength range"><span>View</span>
+        <button data-xr="whole" type="button">Whole SED</button>
+        <button data-xr="uvopt" type="button">Rest UV–NIR</button>
+        <button data-xr="fir" type="button">Rest far-IR</button>
+        <button data-xr="radio" type="button">To radio</button></div>
+      <div class="grp" role="group" aria-label="Emission lines"><span>Lines</span>
+        <button data-lp="1" type="button">Major</button>
+        <button data-lp="2" type="button">+ Secondary</button>
+        <button data-lp="3" type="button">All</button>
+        <button data-lp="0" type="button">None</button></div>
+      <div class="grp"><span>Top axis</span>
+        <select id="topax" aria-label="Top axis"><option value="nu">Observed frequency</option><option value="rest">Rest wavelength</option></select></div>
+    </div>
+    <div class="toolbar">
+      <label class="chk"><input id="showlab" type="checkbox" checked> Line labels</label>
+      <label class="chk"><input id="showdep" type="checkbox" checked> Depth markers</label>
+      <label class="chk"><input id="showcomp" type="checkbox"> Components</label>
+      <label class="chk"><input id="ylock" type="checkbox"> Lock y-axis</label>
+      <div class="grp"><button id="pin" type="button">Pin this SED</button><button id="unpin" type="button">Clear pins</button></div>
+    </div>
+    <div class="svgwrap" id="svgwrap">
+      <svg id="plot" viewBox="0 0 1000 800" role="img" aria-label="Observed-frame spectral energy distribution with instrument coverage"></svg>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="notes">
+    <p><b>How to read it.</b> The curve is the flux a telescope above the atmosphere would see, in µJy (right axis in AB mag). Each short horizontal bar with an arrow is the continuum depth of one filter or band at the chosen S/N and time; a galaxy is detected where the curve sits above the bar. Lanes below show where each instrument works, with the atmosphere on top. Ground-based instruments only see through its windows. Hover anything for numbers.</p>
+  </div>
+</div>
+</div>
+
+<section class="tbl">
+  <h2>Emission-line reference</h2>
+  <p class="sub">The lines in the model, grouped by rest wavelength. Ticking a row shows or hides it in the plot. The last three columns follow the current galaxy: where the line lands, the model flux, and the selected facility that reaches the chosen S/N fastest (background-limited √t scaling, no overheads).</p>
+  <div class="phlegend" id="phlegend"></div>
+  <div class="tscroll"><table id="ltab">
+    <thead><tr><th>Show</th><th>Line</th><th>λ<sub>rest</sub></th><th>Where it comes from</th><th>What it traces</th><th>λ<sub>obs</sub> now</th><th>Model flux</th><th>Fastest route</th></tr></thead>
+  </table></div>
+</section>
+
+<div class="foot">
+  <p><b>Model.</b> Stellar continuum: broken power law normalised to M<sub>UV</sub> (β in the UV, a Balmer/4000 Å step, an optical slope, a Rayleigh–Jeans tail). Star formation: SFR<sub>UV</sub> from L<sub>ν</sub>(1500 Å) and SFR<sub>IR</sub> from L<sub>IR</sub> (Kennicutt &amp; Evans 2012), split by the obscured fraction. Dust: optically thin modified blackbody (β<sub>d</sub>≈1.8) with a mid-IR power law and PAH bands (Casey 2012-like), normalised to L<sub>IR</sub>(8–1000 µm). Radio: FIR–radio correlation (q=2.64) with 10% free–free. Hydrogen lines: case B from SFR<sub>tot</sub>×ξ<sub>ion</sub> boost; metal lines: ratios interpolated in metallicity between three anchor sets; Calzetti attenuation. [C II] from De Looze+14 scaled per type; other far-IR lines as ratios to [C II]/[O III]; CO from the L<sub>IR</sub>–L′<sub>CO</sub> relation with a type-dependent SLED and a metallicity penalty (CO-dark gas). IGM: Madau (1995) Lyman-series forest plus the damping-wing toy model. Cosmology: flat ΛCDM, H<sub>0</sub>=67.7, Ω<sub>m</sub>=0.31.</p>
+  <p><b>Depths.</b> 5σ point-source values for 10 ks on source, rounded from public sensitivity tables and calculators (JWST JDox, HST/ACS–WFC3 handbooks, ALMA &amp; NOEMA sensitivity calculators, VLA exposure calculator, instrument pages for Keck, Subaru, VLT and the ELT design studies), scaled as √t. Herschel/SPIRE and Euclid Wide are fixed survey or confusion limits. They are good to roughly a factor of two and ignore sky lines, overheads, source size and calibration. Use the real ETCs for proposals.</p>
+</div>
+</div>
+
+<script>
+(()=>{
+"use strict";
+/* ---------- constants & cosmology ---------- */
+const C=2.99792458e10, CKMS=299792.458, MPC=3.0857e24, LSUN=3.828e33, HPL=6.626e-27, KB=1.381e-16;
+const H0=67.7, OM=0.31, OL=0.69, TCMB0=2.7255;
+const Ez=z=>Math.sqrt(OM*(1+z)**3+OL);
+function DcMpc(z){const n=240,h=z/n;let s=0;for(let i=0;i<=n;i++){const w=(i===0||i===n)?1:(i%2?4:2);s+=w/Ez(i*h);}return CKMS/H0*s*h/3;}
+const ageGyr=z=>(2/(3*Math.sqrt(OL)))*(977.79/H0)*Math.asinh(Math.sqrt(OL/OM)*(1+z)**-1.5);
+const Hz=z=>H0*Ez(z);
+const sig=x=>1/(1+Math.exp(-x));
+const softplus=x=>x>30?x:Math.log1p(Math.exp(x));
+const AB2uJy=m=>10**((23.9-m)/2.5);
+const uJy2AB=f=>23.9-2.5*Math.log10(f);
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+
+/* ---------- atmosphere (toy) ---------- */
+const NIRB=[[0.686,0.692,0.45,0.002],[0.758,0.770,0.75,0.002],[0.93,0.97,0.5,0.008],[1.11,1.16,0.55,0.008],[1.34,1.45,0.97,0.01],[1.80,1.96,0.95,0.012],[2.45,3.35,0.985,0.03],[4.17,4.52,0.98,0.02],[4.6,5.1,0.35,0.03],[5.15,7.8,0.995,0.08],[9.4,10.0,0.35,0.05],[13.4,17.0,0.97,0.25],[17,25,0.55,0.5],[24.5,40,0.995,0.5]];
+const DRY=[[60,120,0.9],[118.75,10,0.8],[368.5,0.6,1],[424.76,1.5,1],[487.25,1,1],[715.4,1.2,1.2],[773.8,1.5,1.2],[834.1,1.5,1.2]];
+const WET=[[22.235,0.05,3],[183.31,25,2],[325.15,4,2],[380.2,40,2.5],[448.0,40,2.5],[474.7,6,2],[556.94,300,2.5],[620.7,4,2],[752.03,200,2.5],[916.2,10,2.5],[970.3,30,2.5],[987.93,300,3],[1097.4,900,3],[1113.3,900,3],[1162.9,400,3]];
+function atmT(lam,pwv){
+  if(lam<0.29) return 0;
+  if(lam<=40){let T=sig((lam-0.318)/0.005);for(const [a,b,d,e] of NIRB)T*=1-d*sig((lam-a)/e)*sig((b-lam)/e);return T;}
+  if(lam<240) return 0;
+  const nu=CKMS/lam; // GHz (lam in µm)
+  let d=0.006*(nu/100)**1.5, w=0.017*(nu/100)**2;
+  for(const [c,p,g] of DRY){const x=nu-c;d+=p*g*g/(x*x+g*g)*Math.exp(-x*x/1800);}
+  for(const [c,p,g] of WET){const x=nu-c;w+=p*g*g/(x*x+g*g)*Math.exp(-x*x/1800);}
+  return Math.exp(-(d+pwv*w));
+}
+
+/* ---------- galaxy types ---------- */
+const TYPES={
+ lae:{n:'Strong LAE',d:'Young, metal-poor, Lyα EW ≳ 100 Å',beta:-2.4,bopt:-2.4,B:0.85,nir:-2,fobs:0.03,td:60,bd:1.8,am:2.0,pah:0,Z:0.05,fesc:0.35,xi:1.8,fwhm:120,cii:0.5,o3c:6,o1c:0.6,sled:'mid',sfrFac:1,bb:1,broad:0,agn:0,he2:2.5},
+ sfg:{n:'Typical SFG',d:'Sub-L* star-former of the EoR',beta:-2.1,bopt:-2.0,B:1.05,nir:-2,fobs:0.15,td:55,bd:1.8,am:2.0,pah:0.1,Z:0.15,fesc:0.08,xi:1.3,fwhm:150,cii:0.8,o3c:3.5,o1c:0.8,sled:'mid',sfrFac:1,bb:1,broad:0,agn:0,he2:1},
+ lbg:{n:'UV-bright LBG',d:'REBELS-like, partly dusty',beta:-1.8,bopt:-1.7,B:1.25,nir:-2,fobs:0.55,td:47,bd:1.8,am:2.0,pah:0.3,Z:0.35,fesc:0.03,xi:1.0,fwhm:250,cii:1.0,o3c:1.5,o1c:1.0,sled:'mid',sfrFac:1,bb:1,broad:0,agn:0,he2:1},
+ lirg:{n:'Dusty SFG (LIRG)',d:'Most star formation obscured',beta:-1.0,bopt:-1.3,B:1.4,nir:-2,fobs:0.92,td:40,bd:1.8,am:2.0,pah:1.0,Z:0.6,fesc:0.005,xi:1.0,fwhm:300,cii:0.7,o3c:0.6,o1c:1.2,sled:'mid',sfrFac:1,bb:1,broad:0,agn:0,he2:1},
+ smg:{n:'SMG / ULIRG',d:'Extreme dusty starburst',beta:0.0,bopt:-0.8,B:1.5,nir:-2,fobs:0.99,td:38,bd:2.0,am:2.3,pah:0.8,Z:1.0,fesc:0.001,xi:1.0,fwhm:450,cii:0.35,o3c:0.35,o1c:1.5,sled:'high',sfrFac:1,bb:1,broad:0,agn:0,he2:1},
+ qui:{n:'Quiescent',d:'Strong Balmer break, little SF',beta:1.0,bopt:-1.0,B:2.5,nir:-2,fobs:0.3,td:25,bd:1.8,am:2.0,pah:0.5,Z:1.0,fesc:0,xi:1.0,fwhm:250,cii:1.0,o3c:0.3,o1c:0.8,sled:'low',sfrFac:0.03,bb:1,broad:0,agn:0,he2:1},
+ lrd:{n:'Little red dot',d:'V-shaped SED, broad Balmer lines',beta:-2.0,bopt:0.0,B:2.5,nir:-1,fobs:0.1,td:50,bd:1.8,am:2.0,pah:0,Z:0.2,fesc:0.1,xi:1.0,fwhm:150,cii:0.5,o3c:1.5,o1c:0.8,sled:'mid',sfrFac:1,bb:10,broad:2500,agn:0.3,he2:1},
+};
+const SLED={low:[1,.7,.45,.25,.12,.06,.03,.015],mid:[1,.85,.65,.45,.3,.18,.1,.05],high:[1,.9,.8,.7,.6,.5,.38,.28]};
+
+/* metallicity-dependent ratio anchors at Z/Zsun = 0.05, 0.2, 1 */
+const RT={o3:[3.5,6,1],o2:[0.5,1.6,2.5],ne3:[0.3,0.45,0.12],o3a:[0.09,0.05,0.004],n2:[0.012,0.05,0.35],s2:[0.03,0.09,0.3],o1:[0.01,0.03,0.05],s3:[0.15,0.35,0.5],c3:[0.6,0.35,0.05],c4:[0.4,0.1,0.01],he2:[0.06,0.025,0.005],o3s:[0.15,0.08,0.01],mg2:[0.15,0.2,0.1],si4:[0.05,0.03,0.01],he2o:[0.02,0.01,0.002],neR:[3,1,0.2]};
+const RZ=[Math.log10(0.05),Math.log10(0.2),0];
+function rr(k,Z){const v=RT[k],x=Math.log10(Z);let a,b,t;
+  if(x<=RZ[1]){a=0;b=1;}else{a=1;b=2;}
+  t=clamp((x-RZ[a])/(RZ[b]-RZ[a]),0,1);
+  return 10**(Math.log10(v[a])*(1-t)+Math.log10(v[b])*t);}
+
+/* ---------- emission lines ---------- */
+const PH={ion:{g:'●',n:'Ionized gas (H II regions)'},hi:{g:'◆',n:'High-ionization gas / AGN'},neu:{g:'▲',n:'Neutral atomic gas & PDRs'},mol:{g:'■',n:'Molecular gas'},dust:{g:'✱',n:'Dust grains (PAH bands)'}};
+const GRP={uv:'Rest-frame ultraviolet',opt:'Rest-frame optical',ir:'Near- and mid-infrared',fir:'Far-infrared fine-structure lines',smm:'Sub-millimetre: molecules and atomic carbon'};
+const CO_OR='Rotational transition of carbon monoxide in molecular clouds';
+const L=(id,n,lam,pr,ph,g,f,o,t,extra)=>Object.assign({id,n,lam,pr,ph,g,f,o,t},extra||{});
+const LINES=[
+ L('lya','Lyα',0.121567,1,'ion','uv',c=>c.Ha*8.7*c.p.fesc,'H recombination (2p→1s) in H II regions; photons scatter resonantly through neutral H and dust before escaping','Ionizing photon output, H I column and kinematics; at z>6 the neutral fraction of the IGM',{noatt:1}),
+ L('nv','N V λ1240',0.12401,3,'hi','uv',c=>c.Hb*0.5*c.agn,'N⁴⁺ needs 77 eV photons: AGN line regions or very hot stellar winds','AGN activity, very hard ionizing spectra'),
+ L('si4','Si IV+O IV] λ1400',0.1397,3,'hi','uv',c=>c.Hb*c.r('si4'),'P-Cygni winds of O stars plus nebular emission at low Z','Massive-star winds, stellar metallicity'),
+ L('c4','C IV λ1549',0.15495,2,'hi','uv',c=>c.Hb*(c.r('c4')+0.5*c.agn),'C³⁺ (47.9 eV) in high-ionization nebular gas or AGN; also stellar-wind absorption','Hard radiation at low metallicity, AGN; a signpost of LyC-leaking galaxies'),
+ L('he2','He II λ1640',0.16404,2,'hi','uv',c=>c.Hb*(c.r('he2')*c.p.he2+0.3*c.agn),'He⁺ recombination; requires photons above 54.4 eV','Wolf–Rayet and extremely metal-poor stars, X-ray binaries, AGN'),
+ L('o3s','O III] λ1663',0.16634,3,'ion','uv',c=>c.Hb*c.r('o3s'),'Semi-forbidden O²⁺ emission from H II regions','Electron temperature; C/O abundance together with C III]'),
+ L('c3','C III] λ1908',0.19077,1,'ion','uv',c=>c.Hb*c.r('c3'),'Semi-forbidden C²⁺ emission from H II regions; often the brightest UV metal line at low Z','Systemic redshift when Lyα is absorbed; C/O, ionization parameter, density'),
+ L('mg2','Mg II λ2800',0.27998,3,'neu','uv',c=>c.Hb*c.r('mg2'),'Resonant Mg⁺ line from low-ionization gas; broad in quasars','Outflows, LyC escape proxy, black-hole masses (broad component)'),
+ L('o2','[O II] λ3727',0.37285,1,'ion','opt',c=>c.Hb*c.r('o2'),'O⁺ in the low-ionization outer zones of H II regions','SFR at low z; ionization parameter via O32 = [O III]/[O II]; density from the doublet'),
+ L('ne3','[Ne III] λ3869',0.38698,2,'ion','opt',c=>c.Hb*c.r('ne3'),'Ne²⁺ (41 eV) in high-ionization zones','Ionization parameter; Ne3O2 metallicity proxy that is nearly dust-free'),
+ L('hd','Hδ',0.41029,3,'ion','opt',c=>c.HbB*0.259,'H recombination (6→2)','Balmer decrement (dust); deep absorption in post-starbursts',{H:1}),
+ L('hg','Hγ',0.43417,3,'ion','opt',c=>c.HbB*0.468,'H recombination (5→2)','Dust attenuation via Hγ/Hβ',{H:1}),
+ L('o3a','[O III] λ4363',0.43644,3,'ion','opt',c=>c.Hb*c.r('o3a'),'Auroral O²⁺ line from a high-lying level','Electron temperature, hence “direct” metallicity'),
+ L('he2o','He II λ4686',0.46871,3,'hi','opt',c=>c.Hb*(c.r('he2o')*c.p.he2+0.05*c.agn),'He⁺ recombination','Hard ionizing photons (WR stars, AGN)'),
+ L('hb','Hβ',0.48627,1,'ion','opt',c=>c.HbB,'H recombination (4→2) in H II regions','SFR, ionizing photon production ξ_ion, dust via Hα/Hβ',{H:1}),
+ L('o3b','[O III] λ4959',0.49603,2,'ion','opt',c=>c.Hb*c.r('o3')/2.98,'O²⁺ forbidden line, locked at one third of λ5007','Same as λ5007'),
+ L('o3','[O III] λ5007',0.50082,1,'ion','opt',c=>c.Hb*c.r('o3'),'O²⁺ in H II regions; the main optical coolant at sub-solar metallicity','Ionization and metallicity (R23, O3); young bursts at high EW; JWST redshifts at z>7'),
+ L('he1','He I λ5876',0.58772,3,'ion','opt',c=>c.Hb*0.11,'Neutral He recombination','He⁺ zone, density, helium abundance'),
+ L('o1o','[O I] λ6300',0.63020,3,'neu','opt',c=>c.Ha*c.r('o1'),'Neutral O just outside the ionization front; shocks','Shocks and AGN; weak in density-bounded (LyC-leaking) H II regions'),
+ L('n2b','[N II] λ6548',0.65499,3,'ion','opt',c=>c.Ha*c.r('n2')/3.05,'N⁺, locked at one third of λ6584','Same as λ6584'),
+ L('ha','Hα',0.65646,1,'ion','opt',c=>c.HaB,'H recombination (3→2) in H II regions','SFR over ~10 Myr, ξ_ion; broad wings give black-hole masses (AGN, little red dots)',{H:1}),
+ L('n2','[N II] λ6584',0.65853,2,'ion','opt',c=>c.Ha*c.r('n2'),'N⁺ in low-ionization zones','Metallicity (N2, O3N2), N/O enrichment, AGN on the BPT diagram'),
+ L('s2','[S II] λλ6716,6731',0.67251,3,'ion','opt',c=>c.Ha*c.r('s2'),'S⁺ in partially ionized gas','Electron density from the doublet ratio, shocks, diffuse ionized gas'),
+ L('s3n','[S III] λ9531',0.95332,3,'ion','ir',c=>c.Hb*c.r('s3'),'S²⁺ in H II regions','Ionization (S32), sulphur abundance'),
+ L('he1n','He I λ10830',1.0833,3,'ion','ir',c=>c.Hb*0.4,'Metastable neutral helium','Outflows (in absorption), density'),
+ L('pag','Paγ',1.0941,3,'ion','ir',c=>c.HbB*0.090,'H recombination (6→3)','Dust-insensitive SFR',{H:1}),
+ L('pab','Paβ',1.2822,3,'ion','ir',c=>c.HbB*0.163,'H recombination (5→3)','Dust-insensitive SFR',{H:1}),
+ L('paa','Paα',1.8756,2,'ion','ir',c=>c.HbB*0.332,'H recombination (4→3); the strongest near-IR H line','Dust-robust SFR; beyond z≈2 reachable only from space (MIRI)',{H:1}),
+ L('pah33','PAH 3.3 µm',3.3,3,'dust','ir',null,'C–H stretch of small polycyclic aromatic hydrocarbons, UV-excited in PDRs','Small-grain population at PDR surfaces'),
+ L('bra','Brα',4.0523,3,'ion','ir',c=>c.HbB*0.078,'H recombination (5→4)','Extinction-free SFR in dusty galaxies',{H:1}),
+ L('pah62','PAH 6.2 µm',6.2,3,'dust','ir',null,'C–C stretch of PAH molecules','SFR in dusty galaxies; ionization state of PAHs'),
+ L('pah77','PAH 7.7 µm',7.7,2,'dust','ir',null,'Blend of C–C modes; the strongest PAH complex','SFR in dusty galaxies; fades below ~0.2 Z☉ (dust/metal build-up)'),
+ L('h2s3','H₂ S(3) 9.66 µm',9.665,3,'mol','ir',c=>0.5e-4*c.LIReq*LSUN*Math.min(1,c.Z),'Rotational line of warm (200–1000 K) H₂','Shock and PDR heating of molecular gas'),
+ L('pah113','PAH 11.3 µm',11.3,3,'dust','ir',null,'C–H out-of-plane bend of neutral PAHs','PAH size and charge'),
+ L('ne2','[Ne II] 12.8 µm',12.814,3,'ion','ir',c=>c.Ha*0.11/(1+c.r('neR')),'Ne⁺ in H II regions','Dust-free SFR (with [Ne III]); ionization'),
+ L('ne5','[Ne V] 14.3 µm',14.322,3,'hi','ir',c=>c.Ha*0.05*c.agn,'Ne⁴⁺ needs 97 eV: AGN only','Clean AGN signature, even when buried'),
+ L('ne3m','[Ne III] 15.6 µm',15.555,3,'ion','ir',c=>c.Ha*0.11*c.r('neR')/(1+c.r('neR')),'Ne²⁺ in H II regions','Hardness of the radiation field ([Ne III]/[Ne II])'),
+ L('h2s1','H₂ S(1) 17.0 µm',17.035,3,'mol','ir',c=>1e-4*c.LIReq*LSUN*Math.min(1,c.Z),'Rotational line of warm H₂','Warm molecular gas mass'),
+ L('s3a','[S III] 18.7 µm',18.713,3,'ion','ir',c=>c.Ha*0.03,'S²⁺; density-sensitive pair with 33.5 µm','Electron density'),
+ L('o4','[O IV] 25.9 µm',25.89,3,'hi','ir',c=>c.Ha*(0.002+0.05*c.agn),'O³⁺ (55 eV): AGN, Wolf–Rayet stars, fast shocks','AGN versus star formation'),
+ L('s3b','[S III] 33.5 µm',33.48,3,'ion','ir',c=>c.Ha*0.04,'S²⁺ in H II regions','Electron density (with 18.7 µm)'),
+ L('si2','[Si II] 34.8 µm',34.815,3,'neu','ir',c=>c.Ha*0.03*Math.sqrt(Math.min(c.Z,1.5)),'Si⁺ in PDRs, X-ray-dominated regions and ionized gas','Gas cooling; PDR vs XDR'),
+ L('o3_52','[O III] 52 µm',51.815,2,'ion','fir',c=>c.O3*0.8,'O²⁺ fine-structure line','Electron density (ratio with 88 µm)'),
+ L('n3','[N III] 57 µm',57.32,3,'ion','fir',c=>c.O3*0.1*Math.sqrt(clamp(c.Z/0.2,0.2,5)),'N²⁺ fine-structure line','N/O abundance with [O III]'),
+ L('o1_63','[O I] 63 µm',63.184,2,'neu','fir',c=>c.CII*c.p.o1c,'Neutral O in warm, dense PDRs, where it is the main coolant; often self-absorbed','PDR density and UV field, outflows'),
+ L('o3_88','[O III] 88 µm',88.356,1,'ion','fir',c=>c.O3,'O²⁺ fine-structure line from H II regions; very bright in low-Z, high-ionization galaxies','ALMA redshifts at z>7; ionization and burstiness via [O III]/[C II]'),
+ L('n2_122','[N II] 122 µm',121.90,3,'ion','fir',c=>c.N2*1.5,'N⁺ (14.5 eV) exists only in ionized gas','Electron density (with 205 µm)'),
+ L('o1_145','[O I] 145 µm',145.53,3,'neu','fir',c=>c.CII*c.p.o1c*0.08,'Neutral O; optically thin, unlike 63 µm','PDR density and temperature'),
+ L('cii','[C II] 158 µm',157.74,1,'neu','fir',c=>c.CII,'C⁺ (11.3 eV to form) mostly from PDRs, also from neutral atomic and ionized gas; the dominant ISM coolant','SFR, gas mass, kinematics and dynamical masses, redshifts'),
+ L('n2_205','[N II] 205 µm',205.18,2,'ion','fir',c=>c.N2,'N⁺, only in ionized gas','Fraction of [C II] arising in ionized gas; N/O'),
+ L('co87','CO(8–7)',325.23,3,'mol','smm',c=>c.co(8),CO_OR,'Warm, dense gas; starburst or AGN heating (high-J end of the SLED)'),
+ L('ci21','[C I](2–1) 370 µm',370.42,3,'mol','smm',c=>3e-11*809.34**3*0.1*c.LpCO*LSUN,'Neutral carbon mixed with CO-bearing gas','Gas excitation temperature (with 1–0)'),
+ L('co76','CO(7–6)',371.65,3,'mol','smm',c=>c.co(7),CO_OR,'Warm, dense gas; sits next to [C I](2–1)'),
+ L('h2o','H₂O 2₁₁–2₀₂ (752 GHz)',398.64,3,'mol','smm',c=>1e-5*c.LIR*LSUN*(c.p.sled==='high'?1:0.3),'Water excited by far-IR pumping in warm, dense gas','Compact, intensely dust-obscured starbursts'),
+ L('co65','CO(6–5)',433.56,2,'mol','smm',c=>c.co(6),CO_OR,'Mid-J excitation; dense star-forming gas'),
+ L('co54','CO(5–4)',520.23,3,'mol','smm',c=>c.co(5),CO_OR,'Mid-J excitation'),
+ L('ci10','[C I](1–0) 609 µm',609.14,2,'mol','smm',c=>3e-11*492.16**3*0.2*c.LpCO*LSUN,'Neutral carbon in molecular clouds; optically thin','Molecular gas mass, including CO-dark gas'),
+ L('co43','CO(4–3)',650.25,3,'mol','smm',c=>c.co(4),CO_OR,'Mid-J excitation'),
+ L('co32','CO(3–2)',866.96,2,'mol','smm',c=>c.co(3),CO_OR,'Molecular gas mass (with an excitation correction)'),
+ L('co21','CO(2–1)',1300.40,3,'mol','smm',c=>c.co(2),CO_OR,'Molecular gas mass'),
+ L('co10','CO(1–0)',2600.76,2,'mol','smm',c=>c.co(1),CO_OR,'Total cold molecular gas mass via α_CO; at high z also suppressed by the CMB'),
+];
+
+/* ---------- facilities ---------- */
+const um=ghz=>CKMS/ghz; // GHz -> µm
+const F=(n,lo,hi,d)=>({n,lo,hi,d});          // imaging filter, d = 5σ 10 ks depth in µJy
+const B=(n,glo,ghi,s1,ref)=>({n,lo:um(ghi),hi:um(glo),s1,ref,glo,ghi}); // radio band, s1 = 1σ 10 ks µJy
+const FAC=[
+ {id:'JWST',slot:1,on:true,ground:false,inst:[
+  {n:'NIRCam',k:'img',f:[F('F070W',.62,.78,.011),F('F090W',.795,1.005,.0078),F('F115W',1.013,1.282,.0066),F('F150W',1.331,1.668,.0052),F('F200W',1.755,2.226,.0044),F('F277W',2.416,3.127,.0065),F('F356W',3.14,3.98,.0058),F('F444W',3.88,4.986,.0098)]},
+  {n:'MIRI',k:'img',f:[F('F560W',5.05,6.17,.065),F('F770W',6.58,8.69,.12),F('F1000W',9.02,10.89,.27),F('F1130W',10.95,11.65,.68),F('F1280W',11.59,14.0,.42),F('F1500W',13.53,16.64,.70),F('F1800W',16.52,19.5,1.75),F('F2100W',18.48,23.16,3.5),F('F2550W',23.98,27.65,13)]},
+  {n:'NIRSpec',k:'spec',lo:0.6,hi:5.3,ll:3.5e-19},
+  {n:'NIRCam grism',k:'spec',lo:2.4,hi:5.0,ll:1.7e-18},
+  {n:'MIRI MRS',k:'spec',lo:4.9,hi:27.9,ll:[[4.9,5e-18],[10,7e-18],[18,2e-17],[27.9,6e-17]]}]},
+ {id:'ALMA',slot:2,on:true,ground:true,inst:[
+  {n:'ALMA',k:'band',f:[B('B1',35,50,7,2.5),B('B2',67,90,5,2.5),B('B3',84,116,4.5,2.5),B('B4',125,163,5,2.0),B('B5',163,211,8,1.5),B('B6',211,275,6,1.5),B('B7',275,373,9,1.0),B('B8',385,500,20,0.7),B('B9',602,720,90,0.5),B('B10',787,950,200,0.35)]}]},
+ {id:'HST',slot:3,on:true,ground:false,inst:[
+  {n:'WFC3/UVIS',k:'img',f:[F('F275W',.23,.31,AB2uJy(26.9))]},
+  {n:'ACS',k:'img',f:[F('F435W',.37,.47,AB2uJy(27.9)),F('F606W',.47,.72,AB2uJy(28.3)),F('F814W',.70,.96,AB2uJy(27.9)),F('F850LP',.83,1.05,AB2uJy(27.2))]},
+  {n:'WFC3/IR',k:'img',f:[F('F105W',.90,1.21,AB2uJy(27.5)),F('F125W',1.10,1.42,AB2uJy(27.3)),F('F140W',1.19,1.59,AB2uJy(27.4)),F('F160W',1.40,1.70,AB2uJy(27.2))]},
+  {n:'G102',k:'spec',lo:.80,hi:1.15,ll:1.5e-17},
+  {n:'G141',k:'spec',lo:1.07,hi:1.70,ll:1.5e-17}]},
+ {id:'Keck',slot:4,on:true,ground:true,inst:[
+  {n:'MOSFIRE',k:'img',f:[F('J',1.15,1.35,AB2uJy(25.0)),F('H',1.47,1.80,AB2uJy(24.6)),F('Ks',1.99,2.30,AB2uJy(24.3))]},
+  {n:'LRIS',k:'spec',lo:.32,hi:1.0,ll:3e-18},
+  {n:'DEIMOS',k:'spec',lo:.41,hi:1.05,ll:2e-18},
+  {n:'KCWI/KCRM',k:'spec',lo:.35,hi:1.08,ll:2.5e-18},
+  {n:'MOSFIRE',k:'spec',lo:.97,hi:2.45,ll:3e-18}]},
+ {id:'Subaru',slot:5,on:true,ground:true,inst:[
+  {n:'HSC',k:'img',f:[F('g',.40,.55,AB2uJy(27.4)),F('r',.54,.70,AB2uJy(27.0)),F('i',.69,.85,AB2uJy(26.8)),F('z',.85,.93,AB2uJy(26.2)),F('y',.93,1.07,AB2uJy(25.4))]},
+  {n:'HSC narrow-band',k:'img',f:[F('NB816',.808,.824,AB2uJy(25.7)),F('NB921',.913,.929,AB2uJy(25.5)),F('NB973',.966,.980,AB2uJy(24.6))]},
+  {n:'PFS',k:'spec',lo:.38,hi:1.26,ll:3e-18},
+  {n:'MOIRCS',k:'spec',lo:.9,hi:2.5,ll:1.2e-17}]},
+ {id:'VLT',slot:6,on:true,ground:true,inst:[
+  {n:'HAWK-I',k:'img',f:[F('Y',.97,1.07,AB2uJy(25.5)),F('J',1.18,1.33,AB2uJy(25.3)),F('H',1.50,1.78,AB2uJy(24.8)),F('Ks',1.99,2.31,AB2uJy(24.5))]},
+  {n:'VISIR',k:'img',f:[F('N',8,13,2500),F('Q',17,20,15000)]},
+  {n:'MUSE',k:'spec',lo:.465,hi:.93,ll:1.5e-18},
+  {n:'FORS2',k:'spec',lo:.33,hi:1.1,ll:3e-18},
+  {n:'X-shooter',k:'spec',lo:.30,hi:2.48,ll:5e-18},
+  {n:'KMOS',k:'spec',lo:.8,hi:2.5,ll:6e-18}]},
+ {id:'ELT',slot:7,on:true,ground:true,tag:'planned',inst:[
+  {n:'MICADO',k:'img',f:[F('z',.83,.93,AB2uJy(29.5)),F('J',1.17,1.33,AB2uJy(29.9)),F('H',1.49,1.78,AB2uJy(29.6)),F('Ks',2.0,2.3,AB2uJy(29.0))]},
+  {n:'METIS',k:'img',f:[F('L',3.5,4.1,1.5),F('M',4.5,5.0,8),F('N',8,13,60)]},
+  {n:'HARMONI',k:'spec',lo:.47,hi:2.45,ll:2e-19},
+  {n:'MOSAIC',k:'spec',lo:.45,hi:1.8,ll:3e-19}]},
+ {id:'NOEMA',slot:8,on:false,ground:true,inst:[
+  {n:'NOEMA',k:'band',f:[B('B1',72,116,10,4),B('B2',127,179,12,3),B('B3',200,276,20,2),B('B4',275,373,45,1.5)]}]},
+ {id:'VLA',slot:8,on:false,ground:true,inst:[
+  {n:'VLA',k:'band',f:[B('L',1,2,3.5,5),B('S',2,4,2.5,5),B('C',4,8,2.0,5),B('X',8,12,2.0,5),B('Ku',12,18,2.3,5),B('K',18,26.5,3.5,5),B('Ka',26.5,40,4.5,5),B('Q',40,50,9,5)]}]},
+ {id:'Herschel',slot:8,on:false,ground:false,tag:'retired',inst:[
+  {n:'PACS',k:'img',f:[F('70',60,85,1500),F('100',85,125,1700),F('160',125,210,3500)]},
+  {n:'SPIRE (confusion)',k:'img',fixed:1,f:[F('250',210,290,29000),F('350',290,420,31000),F('500',420,610,34000)]}]},
+ {id:'Spitzer',slot:8,on:false,ground:false,tag:'retired',inst:[
+  {n:'IRAC',k:'img',f:[F('3.6',3.18,3.94,AB2uJy(24.9)),F('4.5',4.02,5.02,AB2uJy(24.7)),F('5.8',5.0,6.4,AB2uJy(22.6)),F('8.0',6.4,9.3,AB2uJy(22.5))]},
+  {n:'MIPS',k:'img',f:[F('24',20.8,26.1,40)]}]},
+ {id:'Euclid',slot:8,on:false,ground:false,tag:'Wide survey',inst:[
+  {n:'VIS + NISP (Wide)',k:'img',fixed:1,f:[F('VIS',.55,.90,AB2uJy(26.2)),F('Y',.95,1.21,AB2uJy(24.3)),F('J',1.17,1.57,AB2uJy(24.5)),F('H',1.52,2.02,AB2uJy(24.4))]}]},
+ {id:'Roman',slot:8,on:false,ground:false,tag:'projected',inst:[
+  {n:'WFI',k:'img',f:[F('F062',.48,.76,AB2uJy(28.6)),F('F087',.76,.98,AB2uJy(28.3)),F('F106',.93,1.19,AB2uJy(28.3)),F('F129',1.13,1.45,AB2uJy(28.2)),F('F158',1.38,1.77,AB2uJy(28.1)),F('F184',1.68,2.00,AB2uJy(27.6)),F('F213',1.95,2.30,AB2uJy(27.0))]},
+  {n:'WFI grism',k:'spec',lo:1.0,hi:1.93,ll:2e-17}]},
+];
+function bandMeanT(b,pwv){let s=0;const n=40;for(let i=0;i<n;i++){const g=b.glo+(b.ghi-b.glo)*(i+.5)/n;s+=atmT(CKMS/g,pwv);}return s/n;}
+FAC.forEach(f=>f.inst.forEach(i=>{if(i.k==='band')i.f.forEach(b=>{b.Tref=bandMeanT(b,b.ref);});}));
+function lineLim(ll,lam){if(typeof ll==='number')return ll;
+  if(lam<=ll[0][0])return ll[0][1];
+  for(let i=1;i<ll.length;i++)if(lam<=ll[i][0]){const [a,va]=ll[i-1],[b,vb]=ll[i];const t=Math.log(lam/a)/Math.log(b/a);return Math.exp(Math.log(va)*(1-t)+Math.log(vb)*t);}
+  return ll[ll.length-1][1];}
+
+/* ---------- state ---------- */
+const S={z:7,M:-21,type:'lbg',p:{...TYPES.lbg},cmb:true,xauto:true,xhi:0.3,rb:10**-0.3,dv:200,texp:1e4,snr:5,R:0,pwv:1,
+  fac:Object.fromEntries(FAC.map(f=>[f.id,f.on])),showLab:true,showDep:true,showComp:false,ylock:false,yr:null,top:'nu',xr:'whole',xc:null,pins:[],
+  lineOn:Object.fromEntries(LINES.map(l=>[l.id,l.pr<=2]))};
+const xhiToy=z=>0.5*(1+Math.tanh((z-7.5)/1.0));
+
+/* ---------- dust template ---------- */
+let dustCache={key:''};
+function dustTemplate(T,bd,am,pah){
+  const key=[T.toFixed(2),bd,am,pah].join('|'); if(dustCache.key===key)return dustCache;
+  const n=900,l0=0,l1=5,dl=(l1-l0)/(n-1),S=new Float64Array(n),lam=new Float64Array(n);
+  for(let i=0;i<n;i++){const l=10**(l0+i*dl);lam[i]=l;const nu=C/(l*1e-4),x=HPL*nu/(KB*T);S[i]=x>700?0:nu**(3+bd)/Math.expm1(x);}
+  let j=0;for(let i=1;i<n-1;i++){if(S[i]<=0)continue;const s=(Math.log(S[i+1])-Math.log(S[i-1]))/(Math.log(lam[i+1])-Math.log(lam[i-1]));if(isFinite(s)&&s<=am){j=i;break;}}
+  for(let i=0;i<j;i++)S[i]=S[j]*(lam[i]/lam[j])**am;
+  if(pah>0){let i8=Math.round((Math.log10(8)-l0)/dl);const s8=S[i8];
+    const P=[[3.3,.04,.25],[6.2,.09,1.4],[7.7,.3,2.6],[8.6,.12,1.0],[11.3,.12,1.5],[12.7,.15,.7]];
+    for(let i=0;i<n;i++){let a=0;for(const [c,w,h] of P)a+=h*Math.exp(-0.5*((lam[i]-c)/w)**2);S[i]+=pah*s8*a;}}
+  let norm=0;for(let i=1;i<n;i++){if(lam[i]<8||lam[i]>1000)continue;const nu=C/(lam[i]*1e-4);norm+=S[i]*nu*dl*Math.LN10;}
+  dustCache={key,S,l0,dl,n,norm};return dustCache;}
+function dustAt(D,lr){const u=(Math.log10(lr)-D.l0)/D.dl;if(u<0||u>=D.n-1)return 0;const i=Math.floor(u),t=u-i;return D.S[i]*(1-t)+D.S[i+1]*t;}
+
+/* ---------- Calzetti ---------- */
+function kcal(l){ // l in µm
+  if(l<0.12){const k12=2.659*(-2.156+1.509/.12-.198/.0144+.011/.001728)+4.05;return k12;}
+  if(l<0.63)return 2.659*(-2.156+1.509/l-0.198/(l*l)+0.011/(l*l*l))+4.05;
+  if(l<2.2)return 2.659*(-1.857+1.040/l)+4.05;
+  const k22=2.659*(-1.857+1.040/2.2)+4.05;return k22*(2.2/l)**1.6;}
+
+/* ---------- model ---------- */
+function stellarLog(lA,p){const u0=Math.log10(1500),W=0.04;
+  const g=u=>(p.beta+2)*(u-u0)+(p.bopt-p.beta)*W*softplus((u-Math.log10(3800))/W)+(p.nir-(p.bopt+2))*W*softplus((u-Math.log10(16000))/W)+Math.log10(p.B)*sig((u-Math.log10(3700))/0.012);
+  return g(Math.log10(lA))-g(u0);}
+
+function buildModel(st){
+  const p=st.p,z=st.z,M={st,p,z};
+  M.Dc=DcMpc(z);M.DL=(1+z)*M.Dc;M.DLcm=M.DL*MPC;M.fpd=4*Math.PI*M.DLcm**2;
+  M.LnuUV=4*Math.PI*(10*3.0857e18)**2*10**(-0.4*(st.M+48.6));
+  M.sfrUVnom=8.9e-29*M.LnuUV;
+  M.sfrUV=M.sfrUVnom*p.sfrFac;
+  M.sfrTot=M.sfrUV/(1-p.fobs);M.sfrIR=M.sfrTot*p.fobs;
+  M.LIR=M.sfrIR/1.49e-10;M.LIReq=M.sfrTot/1.49e-10;
+  M.AUV=-2.5*Math.log10(1-p.fobs);M.AV=M.AUV*4.05/kcal(0.15);
+  M.Tcmb=TCMB0*(1+z);
+  const e=4+p.bd;M.Td=st.cmb?(p.td**e+TCMB0**e*((1+z)**e-1))**(1/e):p.td;
+  M.D=dustTemplate(M.Td,p.bd,p.am,p.pah);M.dustA=M.D.norm>0?M.LIR*LSUN/M.D.norm:0;
+  M.L14=M.LIReq*LSUN/3.75e12/10**2.64;
+  M.xhi=st.xauto?xhiToy(z):st.xhi;
+  M.HRb=Hz(z)*st.rb; // km/s
+  M.tauDWc=M.xhi*1700*((1+z)/10)**1.5;
+  // lines
+  const Ha=M.sfrTot/5.37e-42*p.xi,Hb=Ha/2.86;
+  const CII=1.15e7*M.sfrTot*p.cii*LSUN;
+  const lpco=10**((Math.log10(Math.max(M.LIReq,1))+1.74)/1.37)*Math.min(1.2,p.Z);
+  const c={p,Z:p.Z,Ha,Hb,HaB:Ha*p.bb,HbB:Hb*p.bb,agn:p.agn,r:k=>rr(k,p.Z),CII,O3:CII*p.o3c,N2:CII*Math.min(0.1,0.03*(p.Z/0.2)**0.6),LpCO:lpco,LIR:M.LIR,LIReq:M.LIReq,
+    co:J=>3e-11*(115.271*J)**3*lpco*SLED[p.sled][J-1]*LSUN};
+  M.lines=LINES.map(l=>{
+    const o={l,lamObs:l.lam*(1+z)};
+    if(!l.f){o.feat=1;return o;}
+    let Lint=Math.max(0,l.f(c));
+    let att=1; if(!l.noatt&&l.lam<5) att=10**(-0.4*M.AV*kcal(l.lam)/4.05);
+    o.Lint=Lint;o.L=Lint*att;o.F=o.L/M.fpd;
+    let v=(l.H&&p.broad>0)?p.broad:p.fwhm;
+    o.vInt=v; o.v=st.R>0?Math.sqrt(v*v+(CKMS/st.R)**2):v;
+    o.sl=o.lamObs*o.v/CKMS/2.3548; // µm
+    const nu=C/(o.lamObs*1e-4); o.nu=nu;
+    o.peak=o.F/(Math.sqrt(2*Math.PI)*nu*o.v/CKMS/2.3548)*1e29; // µJy
+    if(l.id==='lya'){ // IGM-transmitted flux for reporting
+      const sv=o.vInt/2.3548, frac=0.5*erfc(-(st.dv)/(sv*Math.SQRT2));
+      const tdw=Math.exp(-M.tauDWc/(Math.max(st.dv,0)+M.HRb+1));
+      o.lamObs*=1+st.dv/CKMS; o.Fobs=o.F*tdw*(frac+(1-frac)*tForest(o.lamObs*(1-1e-4),z));o.Tigm=o.Fobs/o.F;
+    } else o.Fobs=o.F;
+    return o;});
+  M.lmap=Object.fromEntries(M.lines.map(o=>[o.l.id,o]));
+  return M;}
+function erfc(x){const t=1/(1+0.5*Math.abs(x));const y=t*Math.exp(-x*x-1.26551223+t*(1.00002368+t*(0.37409196+t*(0.09678418+t*(-0.18628806+t*(0.27886807+t*(-1.13520398+t*(1.48851587+t*(-0.82215223+t*0.17087277)))))))));return x>=0?y:2-y;}
+const LYS=[[0.121567,3.6e-3],[0.102572,1.7e-3],[0.097254,1.2e-3],[0.094974,9.3e-4]];
+function tForest(lo,z){ // lo obs µm
+  const lr=lo/(1+z); if(lr<0.0912)return 0; if(lr>=0.121567)return 1;
+  let tau=0;for(const [lj,A] of LYS){if(lo<lj*(1+z)&&lo>lj)tau+=A*(lo/lj)**3.46;}
+  return Math.exp(-tau);}
+function tIGM(lo,M){const z=M.z,lr=lo/(1+z);
+  if(lr<0.121567)return tForest(lo,z);
+  if(M.xhi<=0)return 1;
+  const dv=CKMS*(lr/0.121567-1);return Math.exp(-M.tauDWc/(dv+M.HRb+1));}
+function cmbFac(lr,M){if(!M.st.cmb)return 1;const nu=C/(lr*1e-4),a=HPL*nu/KB,xd=a/M.Td,xc=a/M.Tcmb;
+  if(xc>50)return 1; // Wien side: CMB contrast negligible (avoids Inf/Inf)
+  return Math.max(0,1-Math.expm1(xd)/Math.expm1(xc));}
+function comps(lo,M){ // returns µJy components (stellar,dust,radio), no IGM
+  const lr=lo/(1+M.z),k=(1+M.z)/M.fpd*1e29;
+  const s=lr>0.0912?M.LnuUV*10**stellarLog(lr*1e4,M.p)*k:0;
+  const dd=dustAt(M.D,lr);const d=dd>0?M.dustA*dd*cmbFac(lr,M)*k:0;
+  const nr=C/(lr*1e-4)/1.4e9;const r=M.L14*(0.9*nr**-0.8+0.1*nr**-0.1)*k;
+  return [s,d,r];}
+function contAt(lo,M){const c=comps(lo,M);return c[0]+c[1]+c[2];}
+function linesAt(lo,M){let s=0;for(const o of M.lines){if(o.feat||!S.lineOn[o.l.id]||!(o.peak>0))continue;const d=(lo-o.lamObs)/o.sl;if(d>-7&&d<7)s+=o.peak*Math.exp(-0.5*d*d);}return s;}
+function totalAt(lo,M){return (contAt(lo,M)+linesAt(lo,M))*tIGM(lo,M);}
+function sampleGrid(xa,xb,M,n){
+  const pts=[];const la=Math.log10(xa),lb=Math.log10(xb);
+  for(let i=0;i<n;i++)pts.push(10**(la+(lb-la)*i/(n-1)));
+  for(const o of M.lines){if(o.feat||!S.lineOn[o.l.id]||!(o.peak>0))continue;if(o.lamObs<xa||o.lamObs>xb)continue;
+    for(const d of [-6,-4,-3,-2.2,-1.6,-1.1,-0.7,-0.35,0,0.35,0.7,1.1,1.6,2.2,3,4,6])pts.push(o.lamObs+d*o.sl);}
+  // near Lyman-alpha break
+  const lb0=0.121567*(1+M.z);for(let i=-20;i<=40;i++)pts.push(lb0*(1+i*0.0015));
+  return pts.filter(x=>x>=xa&&x<=xb).sort((a,b)=>a-b);}
+
+/* ---------- depths & routes ---------- */
+const tScale=()=>Math.sqrt(1e4/S.texp)*S.snr/5;
+function bandDepth(inst,f){ // µJy at chosen S/N and time
+  if(inst.k==='band'){const T=bandMeanT(f,S.pwv);return f.s1*S.snr*Math.sqrt(1e4/S.texp)*(f.Tref/Math.max(T,1e-3));}
+  if(inst.fixed)return f.d*S.snr/5;
+  return f.d*tScale();}
+function routesFor(o,M){ // fastest selected facility to reach S/N on this line
+  if(o.feat||!(o.Fobs>0))return null;
+  const lam=o.lamObs;let best=null;let blocked=false;
+  for(const fac of FAC){if(!S.fac[fac.id])continue;
+    for(const inst of fac.inst){
+      if(inst.k==='spec'){ if(lam<inst.lo||lam>inst.hi)continue;
+        let T=fac.ground?atmT(lam,S.pwv):1; if(fac.ground&&T<0.15){blocked=true;continue;}
+        const lim=lineLim(inst.ll,lam)*S.snr/5/T; const t=1e4*(lim/o.Fobs)**2;
+        if(!best||t<best.t)best={fac:fac.id+(fac.tag==='planned'?' (planned)':''),inst:inst.n,t};}
+      else if(inst.k==='band'){for(const b of inst.f){ if(lam<b.lo||lam>b.hi)continue;
+        const T=atmT(lam,S.pwv); if(T<0.1){blocked=true;continue;}
+        const s1=b.s1*1e-6*(b.Tref/T); // Jy, 1σ continuum 10 ks
+        const dnu=o.nu*o.v/CKMS; const bw=Math.min(7.5e9,(b.ghi-b.glo)*1e9);
+        const sch=s1*Math.sqrt(bw/dnu); const FlimJy=S.snr*sch*o.v; // Jy km/s
+        const Flim=FlimJy*1e-23*o.nu*1e5/C; const t=1e4*(Flim/o.Fobs)**2;
+        if(!best||t<best.t)best={fac:fac.id,inst:inst.n+' '+b.n,t};}}
+    }}
+  return best||{none:1,blocked};}
+
+/* ---------- formatting ---------- */
+const SUP='⁰¹²³⁴⁵⁶⁷⁸⁹';const sup=s=>String(s).replace(/-/g,'⁻').replace(/[0-9]/g,d=>SUP[d]);
+function fsci(x,p=2){if(!isFinite(x)||x<=0)return '—';const e=Math.floor(Math.log10(x));if(e>=-2&&e<=3)return String(Number(x.toPrecision(p)));const m=x/10**e;return `${m.toFixed(p-1)}×10${sup(e)}`;}
+function fpow(e){return e>=0&&e<=3?String(10**e):`10${sup(e)}`;}
+function fpowTick(e){if(e===-1)return '0.1';if(e===-2)return '0.01';return fpow(e);}
+function ftime(s){if(!isFinite(s))return '—';if(s<60)return `${Math.max(1,Math.round(s))} s`;if(s<3600)return `${(s/60).toFixed(s<600?1:0)} min`;const h=s/3600;if(h>1000)return '> 1000 h';return `${h<10?h.toFixed(1):Math.round(h)} h`;}
+function flam(um){if(um<1)return `${um.toFixed(3)} µm`;if(um<100)return `${um.toPrecision(3)} µm`;if(um<1000)return `${Math.round(um)} µm`;return `${(um/1000).toPrecision(3)} mm`;}
+function flamRest(um){if(um<1)return `${Math.round(um*1e4)} Å`;return `${um<10?um.toPrecision(3):um.toPrecision(4).replace(/\.0+$/,'')} µm`;}
+const fGHz=um=>{const g=CKMS/um;return g>=1000?`${(g/1000).toPrecision(3)} THz`:`${g.toPrecision(3)} GHz`;};
+
+/* ---------- plot geometry ---------- */
+const W=1000,PL=70,PR=58,PT=40,PHT=420,LANE0=PT+PHT+68;
+let G={}; // geometry of last render
+const xs=lo=>PL+(Math.log10(lo)-G.la)/(G.lb-G.la)*(W-PL-PR);
+const xinv=px=>10**(G.la+(px-PL)/(W-PL-PR)*(G.lb-G.la));
+const ys=f=>PT+PHT-(Math.log10(f)-G.ya)/(G.yb-G.ya)*PHT;
+function xRange(){const z=S.z;
+  if(S.xr==='custom'&&S.xc)return S.xc;
+  if(S.xr==='uvopt')return [Math.max(0.2,0.085*(1+z)),Math.min(60,2.8*(1+z))];
+  if(S.xr==='fir')return [Math.max(20,30*(1+z)),Math.min(4e5,1600*(1+z))];
+  if(S.xr==='radio')return [100,4e5];
+  return [0.3,S.fac.VLA?3e5:2.5e4];}
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+/* ---------- render ---------- */
+let M=null,hits=[];
+function render(){
+  M=buildModel(S);
+  const [xa,xb]=xRange();G.la=Math.log10(xa);G.lb=Math.log10(xb);
+  const pts=sampleGrid(xa,xb,M,1500);
+  const tot=pts.map(x=>totalAt(x,M));
+  // y range
+  if(!S.ylock||!S.yr){
+    let mx=0,mn=Infinity,cmx=0;
+    pts.forEach((x,i)=>{const v=tot[i];if(v>mx)mx=v;const c=contAt(x,M)*tIGM(x,M);if(c>cmx)cmx=c;if(x/(1+S.z)>0.125&&c>0&&c<mn)mn=c;});
+    if(S.showDep){forEachDepth((fac,inst,f,d)=>{if(f.hi>xa&&f.lo<xb)mn=Math.min(mn,d);});}
+    mx=Math.min(Math.max(mx,cmx*3),cmx*3e3||mx);
+    let yb=Math.ceil(Math.log10(mx||1)+0.15),ya=Math.floor(Math.log10(isFinite(mn)?mn:mx*1e-4)-0.3);
+    ya=Math.max(ya,yb-9);if(yb-ya<3)ya=yb-3;S.yr=[ya,yb];}
+  G.ya=S.yr[0];G.yb=S.yr[1];
+  hits=[];
+  let s='';
+  s+=`<defs><clipPath id="clp"><rect x="${PL}" y="${PT}" width="${W-PL-PR}" height="${PHT}"/></clipPath></defs>`;
+  s+=`<rect x="${PL}" y="${PT}" width="${W-PL-PR}" height="${PHT}" fill="var(--panel)" stroke="var(--rule)"/>`;
+  // grid & axes
+  s+=axes(xa,xb);
+  // line markers (behind curve)
+  const vis=M.lines.filter(o=>S.lineOn[o.l.id]&&o.lamObs>=xa&&o.lamObs<=xb);
+  s+=`<g clip-path="url(#clp)">`;
+  for(const o of vis){const x=xs(o.lamObs);s+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${PT}" y2="${PT+PHT}" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="${o.l.pr===1?'3 3':'1.5 3'}" opacity="${o.l.pr===1?0.75:0.5}"/>`;}
+  // pins
+  S.pins.forEach(pn=>{s+=`<path d="${pathFrom(pn.x,pn.y)}" fill="none" stroke="var(--ink-3)" stroke-width="1.3" opacity="0.8"/>`;});
+  // components
+  if(S.showComp){const cs=[[],[],[]];const base=pts.filter((x,i)=>i%2===0);
+    base.forEach(x=>{const c=comps(x,M),t=tIGM(x,M);cs[0].push(c[0]*t);cs[1].push(c[1]);cs[2].push(c[2]);});
+    const dash=['6 4','2 3','8 3 2 3'];
+    cs.forEach((arr,k)=>{s+=`<path d="${pathFrom(base,arr)}" fill="none" stroke="var(--ink-2)" stroke-width="1.2" stroke-dasharray="${dash[k]}"/>`;});}
+  // main curve
+  s+=`<path d="${pathFrom(pts,tot)}" fill="none" stroke="var(--curve)" stroke-width="1.7" stroke-linejoin="round"/>`;
+  s+=`</g>`;
+  // depth markers
+  if(S.showDep){forEachDepth((fac,inst,f,d)=>{
+    if(f.hi<xa||f.lo>xb)return; const y=ys(d); if(y<PT-2||y>PT+PHT+2)return;
+    const x1=Math.max(PL,xs(f.lo)),x2=Math.min(W-PR,xs(f.hi)),xm=(x1+x2)/2,col=`var(--s${fac.slot})`;
+    s+=`<g><line x1="${x1.toFixed(1)}" x2="${x2.toFixed(1)}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${col}" stroke-width="2.4" stroke-linecap="round"/>`+
+       `<path d="M${xm.toFixed(1)} ${(y-1).toFixed(1)}V${(y-11).toFixed(1)}M${(xm-3).toFixed(1)} ${(y-7.5).toFixed(1)}L${xm.toFixed(1)} ${(y-11.5).toFixed(1)}L${(xm+3).toFixed(1)} ${(y-7.5).toFixed(1)}" stroke="${col}" stroke-width="1.4" fill="none"/></g>`;
+    hits.push({t:'dep',x1,x2,y,fac,inst,f,d});});}
+  // line labels
+  if(S.showLab){const placed=[];const order=[...vis].sort((a,b)=>a.l.pr-b.l.pr);
+    for(const o of order){const x=xs(o.lamObs);if(placed.some(p=>Math.abs(p-x)<11.5))continue;placed.push(x);
+      s+=`<text transform="translate(${(x+3.5).toFixed(1)},${PT+5}) rotate(90)" font-size="10.5" fill="var(--ink-2)" ${o.l.pr===1?'font-weight="600"':''}>${PH_G(o.l.ph)} ${esc(o.l.n)}</text>`;}}
+  vis.forEach(o=>hits.push({t:'line',x:xs(o.lamObs),o}));
+  // lanes
+  s+=lanes(xa,xb,vis);
+  const svg=document.getElementById('plot');svg.setAttribute('viewBox',`0 0 ${W} ${G.h}`);svg.innerHTML=s;
+  G.pts=pts;G.tot=tot;
+  renderLegend();renderStats();renderTable();syncUI();}
+const PH_G=ph=>PH[ph].g;
+function pathFrom(xv,yv){let d='',pen=false;const ymin=10**G.ya*0.3;
+  for(let i=0;i<xv.length;i++){const v=yv[i];if(!(v>ymin)){pen=false;continue;}
+    const X=xs(xv[i]),Y=Math.max(PT-50,ys(v));d+=(pen?'L':'M')+X.toFixed(2)+' '+Y.toFixed(2);pen=true;}
+  return d;}
+function forEachDepth(cb){for(const fac of FAC){if(!S.fac[fac.id])continue;for(const inst of fac.inst){if(inst.k==='spec')continue;for(const f of inst.f)cb(fac,inst,f,bandDepth(inst,f));}}}
+function axes(xa,xb){let s='';const la=G.la,lb=G.lb;
+  // x decades
+  for(let e=Math.floor(la);e<=Math.ceil(lb);e++){for(let m=1;m<10;m++){const v=m*10**e;if(v<xa||v>xb)continue;const x=xs(v);
+    if(m===1){s+=`<line x1="${x}" x2="${x}" y1="${PT}" y2="${PT+PHT}" stroke="var(--grid)"/>`;
+      s+=`<line x1="${x}" x2="${x}" y1="${PT+PHT}" y2="${PT+PHT+6}" stroke="var(--ink-3)"/><text x="${x}" y="${PT+PHT+19}" text-anchor="middle" font-size="12" fill="var(--ink-2)">${fpowTick(e)}</text>`;}
+    else s+=`<line x1="${x}" x2="${x}" y1="${PT+PHT}" y2="${PT+PHT+3}" stroke="var(--ink-3)"/>`;}}
+  // if span is small, add 2 and 5 labels
+  if(lb-la<1.6){for(let e=Math.floor(la);e<=Math.ceil(lb);e++)for(const m of [2,5]){const v=m*10**e;if(v<xa||v>xb)continue;const x=xs(v);s+=`<text x="${x}" y="${PT+PHT+19}" text-anchor="middle" font-size="11" fill="var(--ink-3)">${v<1?v.toPrecision(1):v>=1e4?m+'×'+fpow(e):v}</text>`;}}
+  s+=`<text x="${(PL+W-PR)/2}" y="${PT+PHT+38}" text-anchor="middle" font-size="12.5" fill="var(--ink)">Observed wavelength λ<tspan font-size="9" dy="3">obs</tspan><tspan dy="-3"> (µm)</tspan></text>`;
+  // top axis
+  if(S.top==='nu'){const ga=CKMS/xb,gb=CKMS/xa;
+    for(let e=Math.floor(Math.log10(ga));e<=Math.ceil(Math.log10(gb));e++){const v=10**e;if(v<ga||v>gb)continue;const x=xs(CKMS/v);
+      s+=`<line x1="${x}" x2="${x}" y1="${PT}" y2="${PT-5}" stroke="var(--ink-3)"/><text x="${x}" y="${PT-9}" text-anchor="middle" font-size="11.5" fill="var(--ink-2)">${fpowTick(e)}</text>`;
+      for(let m=2;m<10;m++){const w=m*v;if(w<ga||w>gb)continue;const xx=xs(CKMS/w);s+=`<line x1="${xx}" x2="${xx}" y1="${PT}" y2="${PT-3}" stroke="var(--ink-3)"/>`;}}
+    s+=`<text x="${PL}" y="${PT-24}" font-size="11.5" fill="var(--ink-3)">Observed frequency ν (GHz)</text>`;}
+  else{const ra=xa/(1+S.z),rb=xb/(1+S.z);
+    for(let e=Math.floor(Math.log10(ra));e<=Math.ceil(Math.log10(rb));e++)for(const m of [1,2,5]){const v=m*10**e;if(v<ra||v>rb)continue;const x=xs(v*(1+S.z));
+      s+=`<line x1="${x}" x2="${x}" y1="${PT}" y2="${PT-(m===1?5:3)}" stroke="var(--ink-3)"/>`+(m===1||(rb/ra<200)?`<text x="${x}" y="${PT-9}" text-anchor="middle" font-size="${m===1?11.5:10.5}" fill="var(--ink-${m===1?2:3})">${v<1?(v>=0.01?v.toPrecision(1):m+'×'+fpow(e)):(v>=1e4?m+'×'+fpow(e):v)}</text>`:'');}
+    s+=`<text x="${PL}" y="${PT-24}" font-size="11.5" fill="var(--ink-3)">Rest-frame wavelength (µm) at z = ${S.z.toFixed(2)}</text>`;}
+  // y decades
+  for(let e=G.ya;e<=G.yb;e++){const y=ys(10**e);
+    s+=`<line x1="${PL}" x2="${W-PR}" y1="${y}" y2="${y}" stroke="var(--grid)"/><line x1="${PL-6}" x2="${PL}" y1="${y}" y2="${y}" stroke="var(--ink-3)"/><text x="${PL-9}" y="${y+4}" text-anchor="end" font-size="12" fill="var(--ink-2)">${fpowTick(e)}</text>`;
+    for(let m=2;m<10&&e<G.yb;m++){const yy=ys(m*10**e);s+=`<line x1="${PL-3}" x2="${PL}" y1="${yy}" y2="${yy}" stroke="var(--ink-3)"/>`;}}
+  s+=`<text transform="translate(18,${PT+PHT/2}) rotate(-90)" text-anchor="middle" font-size="12.5" fill="var(--ink)">Flux density S<tspan font-size="9" dy="3">ν</tspan><tspan dy="-3"> (µJy)</tspan></text>`;
+  // AB axis (same scale, relabelled)
+  const mTop=uJy2AB(10**G.yb),mBot=uJy2AB(10**G.ya),span=mBot-mTop,step=span>16?4:2;
+  for(let m=Math.ceil(mTop/step)*step;m<=mBot;m+=step){const y=ys(AB2uJy(m));s+=`<line x1="${W-PR}" x2="${W-PR+5}" y1="${y}" y2="${y}" stroke="var(--ink-3)"/><text x="${W-PR+8}" y="${y+4}" font-size="11.5" fill="var(--ink-2)" class="mono">${m}</text>`;}
+  s+=`<text transform="translate(${W-12},${PT+PHT/2}) rotate(90)" text-anchor="middle" font-size="12" fill="var(--ink-3)">AB magnitude</text>`;
+  return s;}
+function lanes(xa,xb,vis){let s='',y=LANE0;const x0=PL,x1=W-PR;
+  // atmosphere
+  const ah=30;
+  s+=`<text x="${PL-8}" y="${y+12}" text-anchor="end" font-size="11" font-weight="600" fill="var(--ink-2)">Sky</text><text x="${PL-8}" y="${y+24}" text-anchor="end" font-size="9.5" fill="var(--ink-3)">${S.pwv.toFixed(1)} mm</text>`;
+  s+=`<rect x="${x0}" y="${y}" width="${x1-x0}" height="${ah}" fill="none" stroke="var(--rule)"/>`;
+  let d=`M${x0} ${y+ah}`;const n=900;for(let i=0;i<=n;i++){const l=10**(G.la+(G.lb-G.la)*i/n);const T=atmT(l,S.pwv);d+=`L${xs(l).toFixed(1)} ${(y+ah-T*(ah-2)).toFixed(1)}`;}d+=`L${x1} ${y+ah}Z`;
+  s+=`<path d="${d}" fill="var(--atm)" opacity="0.55"/>`;
+  hits.push({t:'atm',y0:y,y1:y+ah});
+  y+=ah+8;
+  const top=y;
+  for(const fac of FAC){if(!S.fac[fac.id])continue;
+    const col=`var(--s${fac.slot})`;
+    // spec packing
+    const specs=[];fac.inst.filter(i=>i.k==='spec').forEach(i=>{if(i.hi<xa||i.lo>xb)return;const a=Math.max(x0,xs(i.lo)),b=Math.min(x1,xs(i.hi));
+      const lw=i.n.length*5.6+8;let row=0;while(specs.some(o=>o.row===row&&!(b<o.a-2||a>o.b+o.extra+2)))row++;specs.push({i,a,b,row,extra:Math.max(0,lw-(b-a))});});
+    const nsub=specs.length?Math.max(...specs.map(o=>o.row))+1:0;
+    const h=12+nsub*14+4;
+    s+=`<line x1="${PL}" x2="${x1}" y1="${y-3}" y2="${y-3}" stroke="var(--grid)"/>`;
+    s+=`<text x="${PL-8}" y="${y+10}" text-anchor="end" font-size="11" font-weight="600" fill="var(--ink-2)">${fac.id}</text>`;
+    if(fac.tag)s+=`<text x="${PL-8}" y="${y+21}" text-anchor="end" font-size="9" fill="var(--ink-3)">${fac.tag}</text>`;
+    // imaging / bands
+    for(const inst of fac.inst){if(inst.k==='spec')continue;for(const f of inst.f){if(f.hi<xa||f.lo>xb)continue;
+      const a=Math.max(x0,xs(f.lo)),b=Math.min(x1,xs(f.hi));
+      s+=`<rect x="${(a+1).toFixed(1)}" y="${y}" width="${Math.max(1.5,b-a-2).toFixed(1)}" height="8" rx="2" fill="${col}" opacity="${inst.k==='band'?0.85:0.6}"/>`;
+      if(inst.k==='band'&&b-a>20)s+=`<text x="${((a+b)/2).toFixed(1)}" y="${y-0.5}" text-anchor="middle" font-size="8.5" fill="var(--ink-3)" dy="-1">${f.n}</text>`;
+      hits.push({t:'filt',x1:a,x2:b,y0:y-2,y1:y+10,fac,inst,f});}}
+    for(const o of specs){const yy=y+12+o.row*14;
+      s+=`<rect x="${(o.a+1).toFixed(1)}" y="${yy}" width="${Math.max(2,o.b-o.a-2).toFixed(1)}" height="11" rx="3" fill="${col}" opacity="0.22" stroke="${col}" stroke-width="1"/>`;
+      s+=`<text x="${(o.a+5).toFixed(1)}" y="${yy+8.6}" font-size="9.5" fill="var(--ink)">${esc(o.i.n)}</text>`;
+      hits.push({t:'spec',x1:o.a,x2:o.b,y0:yy,y1:yy+11,fac,inst:o.i});}
+    y+=h+6;}
+  // line positions through lanes
+  for(const o of vis){const x=xs(o.lamObs).toFixed(1);s+=`<line x1="${x}" x2="${x}" y1="${LANE0}" y2="${y-4}" stroke="var(--ink-3)" stroke-width="0.8" stroke-dasharray="1 3" opacity="0.7"/>`;}
+  s+=`<text x="${PL}" y="${LANE0-6}" font-size="10.5" fill="var(--ink-3)">Coverage: filled = imaging filters / bands, outlined = spectrographs. Grey = atmospheric transmission.</text>`;
+  G.h=y+8;return s;}
+
+/* ---------- side panels ---------- */
+function renderLegend(){const el=document.getElementById('legend');
+  let h=`<span><i></i>${TYPES[S.type].n}${isMod()?' (modified)':''}, z = ${S.z.toFixed(2)}, M<sub>UV</sub> = ${S.M.toFixed(1)}</span>`;
+  if(S.showComp)h+=`<span><i class="d" style="border-top-color:var(--ink-2);border-top-style:dashed"></i>stars</span><span><i style="border-top:2px dotted var(--ink-2)"></i>dust</span><span><i class="d" style="border-top-color:var(--ink-2)"></i>radio (dash-dot)</span>`;
+  S.pins.forEach(p=>{h+=`<span><i style="border-top-color:var(--ink-3)"></i>${p.label}</span>`;});
+  h+=`<span class="dim">Arrows = ${S.snr}σ depth in ${ftime(S.texp)}</span>`;
+  el.innerHTML=h;}
+function renderStats(){const m=M,p=S.p;
+  const lya=m.lmap.lya,ha=m.lmap.ha,hb=m.lmap.hb,o3=m.lmap.o3,o3b=m.lmap.o3b;
+  const Llam=lA=>m.LnuUV*10**stellarLog(lA,p)*2.998e18/(lA*lA);
+  const ewHa=ha.L/Llam(6563),ewO3=(o3.L+o3b.L+hb.L)/Llam(5000),ewLya=lya.Fobs*m.fpd/Llam(1216);
+  const mapp=S.M+5*Math.log10(m.DL*1e5)-2.5*Math.log10(1+S.z);
+  const it=[
+   ['Age of Universe',ageGyr(S.z)*1000<1000?(ageGyr(S.z)*1000).toFixed(0):ageGyr(S.z).toFixed(2),ageGyr(S.z)<1?'Myr':'Gyr'],
+   ['Luminosity distance',(m.DL/1000).toFixed(1),'Gpc'],
+   ['Apparent m(1500 Å)',mapp.toFixed(1),'AB'],
+   ['SFR (UV, unobscured)',fsci(m.sfrUV),'M☉/yr'],
+   ['SFR (IR, obscured)',fsci(m.sfrIR),'M☉/yr'],
+   ['L_IR (8–1000 µm)',fsci(m.LIR),'L☉'],
+   ['A_UV  /  A_V',`${m.AUV.toFixed(2)} / ${m.AV.toFixed(2)}`,'mag'],
+   ['T_dust at z  /  T_CMB',`${m.Td.toFixed(0)} / ${m.Tcmb.toFixed(1)}`,'K'],
+   ['L[C II] 158 µm',fsci(m.lmap.cii.L/LSUN),'L☉'],
+   ['EW₀(Hα)',fsci(ewHa),'Å'],
+   ['EW₀([O III]+Hβ)',fsci(ewO3),'Å'],
+   ['EW₀(Lyα) after IGM',fsci(ewLya),'Å'],
+   ['x_HI  /  T_IGM(Lyα)',`${m.xhi.toFixed(2)} / ${(lya.Tigm||0).toFixed(2)}`,''],
+   ['Lyman break at',flam(0.1216*(1+S.z)),''],
+  ];
+  document.getElementById('stats').innerHTML=it.map(([k,v,u])=>`<div class="stat"><div class="k">${k.replace(/_([A-Za-z]+)/g,'<sub>$1</sub>')}</div><div class="v">${v} <span class="u">${u}</span></div></div>`).join('');}
+
+let tableBuilt=false;
+function buildTable(){const t=document.getElementById('ltab');
+  for(const g of Object.keys(GRP)){const tb=document.createElement('tbody');tb.className='g';tb.innerHTML=`<tr><th colspan="8">${GRP[g]}</th></tr>`;t.appendChild(tb);
+    const body=document.createElement('tbody');
+    LINES.filter(l=>l.g===g).forEach(l=>{const tr=document.createElement('tr');tr.id='row-'+l.id;
+      const pr=['','Major','Secondary','Faint/diagnostic'][l.pr];
+      tr.innerHTML=`<td><input type="checkbox" id="ln-${l.id}" aria-label="Show ${esc(l.n)} in plot"></td>`+
+        `<td class="nm"><span class="gl" title="${PH[l.ph].n}">${PH[l.ph].g}</span>${esc(l.n)}<span class="pr p${l.pr}">${pr}</span></td>`+
+        `<td class="num">${flamRest(l.lam)}</td><td class="txt">${esc(l.o)}</td><td class="txt">${esc(l.t)}</td>`+
+        `<td class="num" id="ob-${l.id}"></td><td class="num" id="fl-${l.id}"></td><td class="num route" id="rt-${l.id}"></td>`;
+      body.appendChild(tr);});
+    t.appendChild(body);}
+  t.addEventListener('change',e=>{const id=e.target.id;if(id&&id.startsWith('ln-')){S.lineOn[id.slice(3)]=e.target.checked;schedule();}});
+  document.getElementById('phlegend').innerHTML=Object.values(PH).map(p=>`<span>${p.g} ${p.n}</span>`).join('');
+  tableBuilt=true;}
+function renderTable(){if(!tableBuilt)buildTable();
+  for(const o of M.lines){const id=o.l.id;
+    document.getElementById('ln-'+id).checked=!!S.lineOn[id];
+    document.getElementById('row-'+id).classList.toggle('off',!S.lineOn[id]);
+    const lo=o.lamObs;document.getElementById('ob-'+id).innerHTML=lo>=200?`${flam(lo)}<br><span class="dim">${fGHz(lo)}</span>`:flam(lo);
+    const fl=document.getElementById('fl-'+id),rt=document.getElementById('rt-'+id);
+    if(o.feat){fl.innerHTML='<span class="dim">in continuum</span>';rt.innerHTML='<span class="dim">photometry</span>';continue;}
+    if(!(o.Fobs>0)){fl.innerHTML='<span class="dim">≈ 0</span>';rt.innerHTML='<span class="dim">—</span>';continue;}
+    if(o.l.lam>30){const jy=o.Fobs/(1e-23*o.nu*1e5/C);fl.innerHTML=`${fsci(jy)} <span class="dim">Jy km/s</span><br><span class="dim">${fsci(o.L/LSUN)} L☉</span>`;}
+    else fl.innerHTML=`${fsci(o.Fobs)}<br><span class="dim">erg s⁻¹ cm⁻²</span>`;
+    const r=routesFor(o,M);
+    if(!r||r.none)rt.innerHTML=`<span class="dim">${r&&r.blocked?'blocked by atmosphere':'no selected spectrograph'}</span>`;
+    else rt.innerHTML=`<span class="fac">${r.fac}</span> ${esc(r.inst)}<br>${S.snr}σ in ${ftime(r.t)}`;}}
+
+/* ---------- tooltip / hover ---------- */
+const tip=document.getElementById('tip'),svgEl=document.getElementById('plot'),wrap=document.getElementById('svgwrap');
+function toVB(ev){const r=svgEl.getBoundingClientRect();return {x:(ev.clientX-r.left)*W/r.width,y:(ev.clientY-r.top)*G.h/r.height,r};}
+function bandFlux(lo,hi){let s=0;const n=40;for(let i=0;i<n;i++){const l=lo*(hi/lo)**((i+.5)/n);s+=totalAt(l,M);}return s/n;}
+let brush=null;
+svgEl.addEventListener('mousemove',ev=>{const p=toVB(ev);
+  if(brush){brush.x2=p.x;drawBrush();return;}
+  let html=null;
+  if(p.x>=PL&&p.x<=W-PR){
+    if(p.y>=PT&&p.y<=PT+PHT){
+      // nearest depth marker
+      let best=null,bd=9;for(const h of hits){if(h.t!=='dep')continue;if(p.x<h.x1-3||p.x>h.x2+3)continue;const dy=Math.abs(p.y-h.y+4);if(dy<bd){bd=dy;best=h;}}
+      if(best)html=depTip(best);
+      if(!html){let bl=null,bx=5;for(const h of hits){if(h.t!=='line')continue;const dx=Math.abs(p.x-h.x);if(dx<bx){bx=dx;bl=h;}}if(bl)html=lineTip(bl.o);}
+      if(!html){const lo=xinv(p.x),f=totalAt(lo,M);
+        html=`<div class="m">λ<sub>obs</sub> ${flam(lo)} · ${fGHz(lo)}<br>λ<sub>rest</sub> ${flamRest(lo/(1+S.z))}<br>S<sub>ν</sub> = ${fsci(f,3)} µJy${f>0?` (${uJy2AB(f).toFixed(1)} AB)`:''}</div>`;}
+    } else if(p.y>LANE0-2){
+      for(const h of hits){if((h.t==='filt'||h.t==='spec')&&p.x>=h.x1&&p.x<=h.x2&&p.y>=h.y0&&p.y<=h.y1){html=h.t==='filt'?filtTip(h):specTip(h);break;}
+        if(h.t==='atm'&&p.y>=h.y0&&p.y<=h.y1){const lo=xinv(p.x);html=`<div class="m">${flam(lo)} · transmission ${(atmT(lo,S.pwv)*100).toFixed(0)}%</div><div class="k">Toy model of Maunakea (optical/IR) and Chajnantor (sub-mm); PWV = ${S.pwv.toFixed(2)} mm</div>`;break;}}
+    }}
+  if(html){tip.innerHTML=html;tip.hidden=false;const wr=wrap.getBoundingClientRect();let lx=ev.clientX-wr.left+wrap.scrollLeft+14,ty=ev.clientY-wr.top+14;
+    if(lx+320>wrap.scrollLeft+wr.width)lx=ev.clientX-wr.left+wrap.scrollLeft-330;tip.style.left=lx+'px';tip.style.top=ty+'px';}
+  else tip.hidden=true;});
+svgEl.addEventListener('mouseleave',()=>{tip.hidden=true;});
+function depTip(h){const f=h.f,inst=h.inst,fl=bandFlux(f.lo,f.hi),sn=fl/h.d*S.snr;
+  const tlab=inst.fixed?'survey/confusion limit':`in ${ftime(S.texp)}`;
+  return `<b>${h.fac.id} · ${esc(inst.n)} ${esc(f.n)}</b><div class="m">${flam(f.lo)} – ${flam(f.hi)}</div>`+
+   `<div>${S.snr}σ depth <span class="m">${fsci(h.d,2)} µJy (${uJy2AB(h.d).toFixed(1)} AB)</span> ${tlab}</div>`+
+   `<div>Model flux in band <span class="m">${fsci(fl,2)} µJy</span> → <b>S/N ≈ ${fsci(sn,2)}</b>${sn>=S.snr?' ✓':''}</div>`+
+   (h.fac.ground&&inst.k==='band'?`<div class="k">Mean sky transmission ${(bandMeanT(f,S.pwv)*100).toFixed(0)}% at ${S.pwv.toFixed(1)} mm PWV</div>`:'');}
+function filtTip(h){const d=bandDepth(h.inst,h.f);return depTip({...h,d});}
+function specTip(h){const i=h.inst;const inr=M.lines.filter(o=>!o.feat&&o.lamObs>=i.lo&&o.lamObs<=i.hi&&o.Fobs>0).sort((a,b)=>a.l.pr-b.l.pr).slice(0,8);
+  const lim=lineLim(i.ll,(i.lo+i.hi)/2)*S.snr/5*Math.sqrt(1e4/S.texp);
+  return `<b>${h.fac.id} · ${esc(i.n)}</b> <span class="k">spectroscopy</span><div class="m">${flam(i.lo)} – ${flam(i.hi)}</div>`+
+   `<div>${S.snr}σ line limit ≈ <span class="m">${fsci(lim)} erg s⁻¹ cm⁻²</span> in ${ftime(S.texp)}</div>`+
+   (inr.length?`<div class="k" style="margin-top:4px">Lines landing here at z = ${S.z.toFixed(2)}:</div><div>${inr.map(o=>esc(o.l.n)).join(', ')}</div>`:`<div class="k">No model lines fall in this range at z = ${S.z.toFixed(2)}.</div>`);}
+function lineTip(o){const l=o.l;let h=`<b>${PH[l.ph].g} ${esc(l.n)}</b> <span class="k">${PH[l.ph].n}</span><div class="m">λ<sub>rest</sub> ${flamRest(l.lam)} → λ<sub>obs</sub> ${flam(o.lamObs)} · ${fGHz(o.lamObs)}</div>`;
+  if(o.feat)return h+`<div class="k">${esc(l.t)}</div>`;
+  if(l.lam>30){const jy=o.Fobs/(1e-23*o.nu*1e5/C);h+=`<div>Flux <span class="m">${fsci(jy)} Jy km/s</span> · L = <span class="m">${fsci(o.L/LSUN)} L☉</span></div>`;}
+  else h+=`<div>Flux <span class="m">${fsci(o.Fobs)} erg s⁻¹ cm⁻²</span>${l.id==='lya'?` <span class="k">(after IGM, T=${o.Tigm.toFixed(2)})</span>`:''}</div>`;
+  const r=routesFor(o,M);h+=r&&!r.none?`<div>Fastest: <b>${r.fac}</b> ${esc(r.inst)}, ${S.snr}σ in ${ftime(r.t)}</div>`:`<div class="k">${r&&r.blocked?'Blocked by the atmosphere for selected ground facilities':'No selected spectrograph covers it'}</div>`;
+  const T=atmT(o.lamObs,S.pwv);h+=`<div class="k">Sky transmission here: ${(T*100).toFixed(0)}%</div><div class="k" style="margin-top:3px">${esc(l.t)}</div>`;return h;}
+// brush zoom
+svgEl.addEventListener('mousedown',ev=>{const p=toVB(ev);if(p.x<PL||p.x>W-PR||p.y<PT||p.y>PT+PHT)return;brush={x1:p.x,x2:p.x};ev.preventDefault();});
+window.addEventListener('mouseup',()=>{if(!brush)return;const a=Math.min(brush.x1,brush.x2),b=Math.max(brush.x1,brush.x2);const el=document.getElementById('brushr');if(el)el.remove();
+  if(b-a>8){S.xc=[xinv(Math.max(PL,a)),xinv(Math.min(W-PR,b))];S.xr='custom';S.yr=S.ylock?S.yr:null;brush=null;schedule();}else brush=null;});
+function drawBrush(){let el=document.getElementById('brushr');if(!el){el=document.createElementNS('http://www.w3.org/2000/svg','rect');el.id='brushr';el.setAttribute('fill','var(--accent)');el.setAttribute('opacity','0.12');svgEl.appendChild(el);}
+  const a=Math.min(brush.x1,brush.x2),b=Math.max(brush.x1,brush.x2);el.setAttribute('x',a);el.setAttribute('width',b-a);el.setAttribute('y',PT);el.setAttribute('height',PHT);}
+svgEl.addEventListener('dblclick',()=>{S.xr='whole';S.xc=null;schedule();});
+
+/* ---------- UI wiring ---------- */
+const $=id=>document.getElementById(id);
+const typesEl=$('types');
+typesEl.innerHTML=Object.entries(TYPES).map(([k,t])=>`<label><input type="radio" name="gtype" value="${k}" ${k===S.type?'checked':''}>${t.n}<small>${t.d}</small></label>`).join('');
+typesEl.addEventListener('change',e=>{if(e.target.name==='gtype'){S.type=e.target.value;S.p={...TYPES[S.type]};pushP();schedule();}});
+$('facs').innerHTML=FAC.map(f=>`<label class="chk"><input type="checkbox" data-fac="${f.id}" ${S.fac[f.id]?'checked':''}><span class="sw" style="background:var(--s${f.slot})"></span>${f.id}${f.tag?` <span class="tag">${f.tag}</span>`:''}</label>`).join('');
+$('facs').addEventListener('change',e=>{const id=e.target.dataset.fac;if(id){S.fac[id]=e.target.checked;schedule();}});
+const fobsFromS=s=>s<=0?0:1-10**(-3*s/1000);
+const sFromFobs=f=>f<=0?0:Math.round(-1000/3*Math.log10(1-f));
+function pushP(){const p=S.p;$('beta').value=p.beta;$('fobs').value=sFromFobs(p.fobs);$('td').value=p.td;$('zm').value=Math.log10(p.Z);$('fesc').value=p.fesc;$('fwhm').value=Math.log10(p.fwhm);}
+function isMod(){const t=TYPES[S.type],p=S.p;return ['beta','fobs','td','Z','fesc','fwhm'].some(k=>Math.abs(p[k]-t[k])>1e-6*Math.max(1,Math.abs(t[k])));}
+function syncUI(){
+  $('zo').textContent=S.z.toFixed(2);$('hz').textContent=`z = ${S.z.toFixed(S.z<10?1:1)}`;
+  $('zhint').textContent=`${(ageGyr(S.z)*1000).toFixed(0)} Myr after the Big Bang · Lyα lands at ${flam(0.121567*(1+S.z))}, [C II] at ${fGHz(157.74*(1+S.z))}`;
+  $('muvo').textContent=S.M.toFixed(1);
+  const p=S.p;$('betao').textContent=p.beta.toFixed(2);$('fobso').textContent=`${(p.fobs*100).toFixed(p.fobs>0.9?1:0)}%`;
+  $('tdo').textContent=`${p.td.toFixed(0)} K`;$('zmo').textContent=`${p.Z.toFixed(p.Z<0.1?3:2)} Z☉`;$('fesco').textContent=p.fesc.toFixed(2);
+  $('fwhmo').textContent=`${Math.round(p.fwhm)} km/s`+(p.broad?` (Balmer ${p.broad})`:'');
+  $('xhi').disabled=S.xauto;$('xhio').textContent=M.xhi.toFixed(2);if(S.xauto)$('xhi').value=M.xhi;
+  $('rbo').textContent=`${S.rb.toFixed(2)} pMpc`;$('dvo').textContent=`${S.dv} km/s`;
+  $('texpo').textContent=ftime(S.texp);$('pwvo').textContent=`${S.pwv.toFixed(2)} mm`;
+  $('modflag').hidden=!isMod();
+  document.querySelectorAll('[data-xr]').forEach(b=>b.classList.toggle('on',b.dataset.xr===S.xr));}
+const bind=(id,fn)=>$(id).addEventListener('input',e=>{fn(e.target);if(!S.ylock)S.yr=null;schedule();});
+bind('z',t=>S.z=+t.value);bind('muv',t=>S.M=+t.value);
+bind('beta',t=>S.p.beta=+t.value);bind('fobs',t=>S.p.fobs=Math.min(0.999,fobsFromS(+t.value)));bind('td',t=>S.p.td=+t.value);
+bind('zm',t=>S.p.Z=10**+t.value);bind('fesc',t=>S.p.fesc=+t.value);bind('fwhm',t=>S.p.fwhm=10**+t.value);
+bind('xhi',t=>S.xhi=+t.value);bind('rb',t=>S.rb=10**+t.value);bind('dv',t=>S.dv=+t.value);
+bind('texp',t=>S.texp=10**+t.value);bind('pwv',t=>S.pwv=+t.value);
+$('snr').addEventListener('change',e=>{S.snr=+e.target.value;S.yr=S.ylock?S.yr:null;schedule();});
+$('res').addEventListener('change',e=>{S.R=+e.target.value;S.yr=S.ylock?S.yr:null;schedule();});
+$('topax').addEventListener('change',e=>{S.top=e.target.value;schedule();});
+$('xauto').addEventListener('change',e=>{S.xauto=e.target.checked;if(!S.xauto)S.xhi=+$('xhi').value;schedule();});
+$('cmb').addEventListener('change',e=>{S.cmb=e.target.checked;schedule();});
+$('reset').addEventListener('click',()=>{S.p={...TYPES[S.type]};pushP();S.yr=S.ylock?S.yr:null;schedule();});
+$('showlab').addEventListener('change',e=>{S.showLab=e.target.checked;schedule();});
+$('showdep').addEventListener('change',e=>{S.showDep=e.target.checked;S.yr=S.ylock?S.yr:null;schedule();});
+$('showcomp').addEventListener('change',e=>{S.showComp=e.target.checked;schedule();});
+$('ylock').addEventListener('change',e=>{S.ylock=e.target.checked;if(!S.ylock)S.yr=null;schedule();});
+document.querySelectorAll('[data-xr]').forEach(b=>b.addEventListener('click',()=>{S.xr=b.dataset.xr;S.xc=null;if(!S.ylock)S.yr=null;schedule();}));
+document.querySelectorAll('[data-lp]').forEach(b=>b.addEventListener('click',()=>{const n=+b.dataset.lp;LINES.forEach(l=>S.lineOn[l.id]=l.pr<=n);if(!S.ylock)S.yr=null;schedule();}));
+$('pin').addEventListener('click',()=>{const pts=sampleGrid(0.1,6e5,M,2600);const y=pts.map(x=>totalAt(x,M));
+  S.pins.push({x:pts,y,label:`${TYPES[S.type].n}${isMod()?'*':''}, z=${S.z.toFixed(2)}, M=${S.M.toFixed(1)}`});if(S.pins.length>3)S.pins.shift();schedule();});
+$('unpin').addEventListener('click',()=>{S.pins=[];schedule();});
+let raf=0;function schedule(){if(raf)return;raf=requestAnimationFrame(()=>{raf=0;render();});}
+pushP();render();
+})();
+</script>
+<script src="assets/site.js"></script>
+</body></html>
