@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ting-Yi Lu</title>
+  <meta name="description" content="Ting-Yi Lu, postdoctoral researcher at UC Santa Barbara working on cosmic reionization with Lyα absorption in galaxy and quasar spectra.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --text: rgba(0, 0, 0, 0.82);
+      --muted: rgba(0, 0, 0, 0.64);
+      --link: #1a4fa0;
+      --line: #e6e6e6;
+      --max: 980px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background: #fff;
+      font-family: Merriweather, Georgia, serif;
+      font-weight: 300;
+      font-size: 15px;
+      line-height: 1.75;
+    }
+    a { color: var(--link); }
+    a:hover { text-decoration: none; }
+
+    /* Header / navigation */
+    header {
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--line);
+      font-family: "PT Sans", Arial, sans-serif;
+    }
+    .bar {
+      max-width: var(--max); margin: 0 auto; padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .brand {
+      font-size: 19px; font-weight: 700; color: #212121; text-decoration: none;
+    }
+    nav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 26px; }
+    nav a {
+      color: var(--muted); text-decoration: none; font-size: 15px;
+      padding-bottom: 4px; border-bottom: 2px solid transparent;
+    }
+    nav a:hover, nav a[aria-current="page"] { color: #000; border-bottom-color: #000; }
+
+    /* Main content */
+    main { max-width: var(--max); margin: 0 auto; padding: 48px 24px 64px; }
+    h1 {
+      font-family: Merriweather, Georgia, serif; font-weight: 700;
+      font-size: 24px; text-align: center; color: #000; margin: 0 0 40px;
+    }
+    .intro {
+      display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 40px; align-items: start;
+    }
+    .intro p { margin: 0 0 1.1em; text-align: justify; hyphens: auto; }
+    .photo img { width: 100%; height: auto; display: block; }
+
+    .contact { margin-top: 1.8em; }
+    .contact p { margin: 0 0 0.35em; text-align: left; }
+
+    footer {
+      border-top: 1px solid var(--line); color: var(--muted);
+      font-family: "PT Sans", Arial, sans-serif; font-size: 13px;
+      text-align: center; padding: 20px 24px;
+    }
+
+    @media (max-width: 760px) {
+      .bar { flex-direction: column; align-items: flex-start; gap: 6px; }
+      nav ul { gap: 18px; flex-wrap: wrap; }
+      main { padding-top: 32px; }
+      .intro { grid-template-columns: 1fr; gap: 28px; }
+      .photo { order: -1; max-width: 220px; margin: 0 auto; }
+      .intro p { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <a class="brand" href="./">Ting-Yi Lu</a>
+      <nav aria-label="Main">
+        <ul>
+          <li><a href="./" aria-current="page">Home</a></li>
+          <li><a href="CV_tylu.pdf">CV</a></li>
+          <!-- Research still points to Google Sites until that page is moved here. -->
+          <li><a href="https://sites.google.com/view/ting-yi-lu/research">Research</a></li>
+          <li><a href="PhDThesis_Ting-Yi_Lu.pdf">PhD thesis</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>Ting-Yi Lu, Postdoc@UCSB</h1>
+
+    <section class="intro">
+      <div class="text">
+        <p>I am a postdoctoral researcher at University of California, Santa Barbara, working in Prof. Caitlin Casey's group. My research focuses on the cosmic reionization era, when early galaxies formed, evolved, and ionized the intergalactic medium. Specifically, I study reionization via hydrogen Lya absorption in galaxy/quasar spectra.</p>
+
+        <p>I did my PhD at the Cosmic Dawn Center, Niels Bohr Institute, University of Copenhagen. During my PhD, I worked at the interface between observations and theory with Prof. Charlotte Mason and Prof. Anne Hutter. I used Gpc-scale reionization simulations, forward modeling, and Bayesian inference to study the relationship between re-ionized bubbles and Lya lines from observable galaxies.</p>
+
+        <p>I obtained an MSc in Astronomy and a BSc in Physics at National Tsing Hua University (NTHU), Taiwan. I was in the NTHU cosmology group led by Prof. Tomotsugu Goto, where I worked on analysing quasar spectra.</p>
+
+        <p>I was born and raised in Taipei, Taiwan, the capital city of the nice little subtropical island facing the Pacific Ocean, with all the yummy food. Outside astronomy, I enjoy playing badminton, running, eating, hanging with my dog, and staying in my warm and fluffy blanket.</p>
+
+        <div class="contact">
+          <p>Email: <a href="mailto:tylu@ucsb.edu">tylu@ucsb.edu</a></p>
+          <p><a href="https://orcid.org/0000-0002-4965-6524">ORCiD</a></p>
+          <p><a href="https://ui.adsabs.harvard.edu/public-libraries/GdgYro5aQoORHazTc_dvXQ">ADS</a></p>
+          <p><a href="https://www.linkedin.com/in/ting-yi-lu-37a631151/">Linkedin</a></p>
+          <p><a href="https://github.com/ting-yi-lu">Github</a></p>
+        </div>
+      </div>
+
+      <figure class="photo" style="margin:0">
+        <img src="profile.jpg" alt="Photo of Ting-Yi Lu" width="377" height="483">
+      </figure>
+    </section>
+  </main>
+
+  <footer>
+    &copy; Ting-Yi Lu
+  </footer>
+</body>
+</html>
