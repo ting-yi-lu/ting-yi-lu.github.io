@@ -13,10 +13,10 @@ body {
   margin: 0;
   color: var(--text);
   background: #fff;
-  font-family: Merriweather, Georgia, serif;
-  font-weight: 300;
-  font-size: 15px;
-  line-height: 1.75;
+  font-family: "Source Serif 4", Georgia, serif;
+  font-weight: 400;
+  font-size: 16.5px;
+  line-height: 1.7;
 }
 a { color: var(--link); }
 a:hover { text-decoration: none; }
@@ -24,18 +24,18 @@ a:hover { text-decoration: none; }
 /* ---------- Page body ---------- */
 main { max-width: var(--max); margin: 0 auto; padding: 44px 24px 64px; }
 h1 {
-  font-family: Merriweather, Georgia, serif; font-weight: 700;
-  font-size: 24px; line-height: 1.35; text-align: center; color: #000; margin: 0 0 36px;
+  font-family: "Source Serif 4", Georgia, serif; font-weight: 600;
+  font-size: 26px; line-height: 1.35; text-align: center; color: #000; margin: 0 0 36px;
 }
 h2 {
-  font-family: Merriweather, Georgia, serif; font-weight: 700;
-  font-size: 17px; color: #000; margin: 2em 0 0.6em;
+  font-family: "Source Serif 4", Georgia, serif; font-weight: 600;
+  font-size: 19px; color: #000; margin: 2em 0 0.6em;
 }
 p { margin: 0 0 1.1em; }
 
 /* Home */
 .intro { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 40px; align-items: start; }
-.intro .text p { text-align: justify; hyphens: manual; -webkit-hyphens: manual; }
+.intro .text p { text-align: left; }
 .photo { margin: 0; }
 .photo img { width: 100%; height: auto; display: block; }
 .contact { margin-top: 1.8em; }
@@ -49,29 +49,28 @@ p { margin: 0 0 1.1em; }
 /* PDF pages (CV, PhD thesis) */
 .doc-actions {
   display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 22px;
-  font-family: "PT Sans", Arial, sans-serif; font-size: 15px; margin: -16px 0 24px;
+  font-family: "Source Sans 3", Arial, sans-serif; font-size: 15px; margin: -16px 0 24px;
 }
 .pdf-view { max-width: 860px; margin: 0 auto; }
 .pdf-view canvas {
   display: block; width: 100%; height: auto; margin: 0 auto 16px;
   background: #fff; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
 }
-.pdf-view .status { text-align: center; color: var(--muted); font-family: "PT Sans", Arial, sans-serif; }
+.pdf-view .status { text-align: center; color: var(--muted); font-family: "Source Sans 3", Arial, sans-serif; }
 
 footer {
   border-top: 1px solid var(--line); color: var(--muted);
-  font-family: "PT Sans", Arial, sans-serif; font-size: 13px;
+  font-family: "Source Sans 3", Arial, sans-serif; font-size: 13px;
   text-align: center; padding: 20px 24px;
 }
 
 /* ---------- Phones and narrow windows ---------- */
 @media (max-width: 760px) {
-  body { font-size: 16px; line-height: 1.7; }
+  body { font-size: 17px; line-height: 1.65; }
   main { padding: 28px 18px 48px; }
-  h1 { font-size: 21px; margin-bottom: 26px; }
+  h1 { font-size: 23px; margin-bottom: 26px; }
   .intro { grid-template-columns: 1fr; gap: 26px; }
   .photo { order: -1; max-width: 220px; margin: 0 auto; }
-  .intro .text p { text-align: left; }
   .doc-actions { margin-top: -8px; }
   .pdf-view canvas { margin-bottom: 10px; }
 }
