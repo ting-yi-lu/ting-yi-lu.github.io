@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ionized bubble probability – Ting-Yi Lu</title>
+  <meta name="description" content="Probability that a reionization-era galaxy, galaxy overdensity or random position sits in a large ionized bubble, from the simulations of Lu et al. (2024).">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/nav.css">
+  <link rel="stylesheet" href="assets/site.css">
+  <style>
+    main { max-width: 1060px; }
+    .lede { max-width: 760px; margin: -12px auto 30px; text-align: center; color: rgba(0,0,0,.7); }
+    .calc { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 28px; align-items: start; }
+    .panel { border: 1px solid #e4e4e4; border-radius: 10px; padding: 18px 18px 8px; background: #fbfbfc; font-family: "PT Sans", Arial, sans-serif; font-size: 15px; line-height: 1.4; }
+    .panel h2 { font-family: "PT Sans", Arial, sans-serif; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: rgba(0,0,0,.55); margin: 0 0 8px; }
+    .ctl { margin-bottom: 16px; }
+    .ctl label.t, .ctl .t { display: flex; justify-content: space-between; gap: 8px; color: #222; margin-bottom: 4px; }
+    .ctl output { font-variant-numeric: tabular-nums; color: #1d2b6b; font-weight: 700; white-space: nowrap; }
+    .ctl .hint { font-size: 13px; color: rgba(0,0,0,.55); margin-top: 3px; }
+    input[type=range] { width: 100%; accent-color: #1d2b6b; }
+    .seg { display: flex; flex-wrap: wrap; gap: 6px; }
+    .seg label { flex: 1 1 auto; text-align: center; border: 1px solid #d6d9e0; border-radius: 7px; padding: 7px 8px; cursor: pointer; background: #fff; font-size: 14px; }
+    .seg input { position: absolute; opacity: 0; pointer-events: none; }
+    .seg label:has(input:checked) { border-color: #1d2b6b; background: #e9ecf7; color: #1d2b6b; font-weight: 700; }
+    .seg label:has(input:focus-visible) { outline: 2px solid #1d2b6b; outline-offset: 1px; }
+    .seg label small { display: block; font-weight: 400; color: rgba(0,0,0,.55); font-size: 12px; }
+    .tracer-opts[hidden] { display: none; }
+
+    .result { border: 1px solid #e4e4e4; border-radius: 10px; padding: 18px 20px; margin-bottom: 18px; font-family: "PT Sans", Arial, sans-serif; }
+    .result .q { color: rgba(0,0,0,.7); font-size: 16px; margin: 0 0 6px; }
+    .result .big { font-size: 44px; line-height: 1.1; color: #1d2b6b; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .result .row { display: flex; flex-wrap: wrap; gap: 6px 28px; margin-top: 8px; font-size: 15px; color: #333; }
+    .result .row b { color: #000; }
+    .result .small { font-size: 13px; color: rgba(0,0,0,.55); margin-top: 8px; }
+    .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .chart { border: 1px solid #e4e4e4; border-radius: 10px; padding: 12px 10px 6px; }
+    .chart h3 { font-family: "PT Sans", Arial, sans-serif; font-size: 15px; margin: 0 4px 4px; color: #222; font-weight: 700; }
+    .chart svg { display: block; width: 100%; height: auto; }
+    .chart svg text { font-family: "PT Sans", Arial, sans-serif; }
+    .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-family: "PT Sans", Arial, sans-serif; font-size: 13px; color: #444; margin: 2px 4px 4px; }
+    .legend i { display: inline-block; width: 22px; height: 0; border-top: 2.5px solid; vertical-align: middle; margin-right: 5px; }
+    .about { margin-top: 34px; font-size: 14.5px; }
+    .about h2 { margin-top: 0; }
+    .about p { margin-bottom: .9em; }
+
+    @media (max-width: 900px) {
+      .calc { grid-template-columns: 1fr; }
+      .charts { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 760px) {
+      .lede { margin-top: -6px; text-align: left; font-size: 15px; }
+      .result .big { font-size: 38px; }
+      .about { font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="bar">
+      <a class="brand" href="index.html">Ting-Yi Lu</a>
+      <nav class="site-nav" aria-label="Main">
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="cv.html">CV</a></li>
+          <li><a href="research.html">Research</a></li>
+          <li><a href="phd-thesis.html">PhD thesis</a></li>
+          <li>
+            <details class="current">
+              <summary>Fun</summary>
+              <ul class="menu">
+                <li><a href="sed-explorer.html">High-z galaxy SED explorer</a></li>
+                <li><a href="bubble-probability.html" aria-current="page">Ionized bubble probability</a></li>
+                <!-- Add new tools here as <li><a href="page.html">Title</a></li> -->
+              </ul>
+            </details>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>How likely is a galaxy to sit in a large ionized bubble?</h1>
+    <p class="lede">During reionization, Lyα photons from a galaxy are far more likely to reach us when the galaxy lies inside a large ionized bubble. Pick a reionization model, redshift and IGM neutral fraction, then a galaxy, an overdensity or a random position, and see how often the bubble around it is larger than the size you choose. The numbers come from the (1.6&nbsp;Gpc)<sup>3</sup> simulations of <a href="https://academic.oup.com/mnras/article/528/3/4872/7589722">Lu et al. (2024)</a>.</p>
+
+    <div class="calc">
+      <form class="panel" id="form" onsubmit="return false">
+        <h2>Universe</h2>
+        <div class="ctl">
+          <div class="t">Reionization model</div>
+          <div class="seg">
+            <label><input type="radio" name="model" value="fg" checked>Gradual<small>many faint galaxies</small></label>
+            <label><input type="radio" name="model" value="bg">Rapid<small>rare bright galaxies</small></label>
+          </div>
+        </div>
+        <div class="ctl">
+          <div class="t">Redshift</div>
+          <div class="seg">
+            <label><input type="radio" name="z" value="7">z = 7</label>
+            <label><input type="radio" name="z" value="8" checked>z = 8</label>
+            <label><input type="radio" name="z" value="9">z = 9</label>
+          </div>
+        </div>
+        <div class="ctl">
+          <label class="t" for="xhi"><span>IGM neutral fraction x<sub>HI</sub></span> <output id="xhio"></output></label>
+          <input id="xhi" type="range" min="0" max="8" step="1" value="4">
+        </div>
+
+        <h2>Where you look</h2>
+        <div class="ctl">
+          <div class="seg">
+            <label><input type="radio" name="tracer" value="muv" checked>A galaxy</label>
+            <label><input type="radio" name="tracer" value="od">An overdensity</label>
+            <label><input type="radio" name="tracer" value="rand">A random position</label>
+          </div>
+        </div>
+        <div class="ctl tracer-opts" id="opt-muv">
+          <label class="t" for="muv"><span>UV magnitude M<sub>UV</sub></span> <output id="muvo"></output></label>
+          <input id="muv" type="range" min="-23" max="-16" step="1" value="-21">
+          <div class="hint">Galaxies within ±0.1 mag of this value.</div>
+        </div>
+        <div class="ctl tracer-opts" id="opt-od" hidden>
+          <label class="t" for="od"><span>Overdensity N/⟨N⟩ at least</span> <output id="odo"></output></label>
+          <input id="od" type="range" min="0" max="29" step="1" value="3">
+          <div class="hint" id="odhint"></div>
+        </div>
+
+        <h2>Bubble size</h2>
+        <div class="ctl">
+          <label class="t" for="rmin"><span>Bubble radius at least</span> <output id="rmino"></output></label>
+          <input id="rmin" type="range" min="-1" max="1" step="0.05" value="0">
+          <div class="hint" id="rminhint"></div>
+        </div>
+      </form>
+
+      <div>
+        <div class="result" aria-live="polite">
+          <p class="q" id="question"></p>
+          <div class="big" id="pbig">…</div>
+          <div class="row" id="prow"></div>
+          <div class="small" id="psmall"></div>
+        </div>
+        <div class="charts">
+          <div class="chart">
+            <h3>Probability across reionization</h3>
+            <svg id="c1" viewBox="0 0 360 280" role="img" aria-label="Probability of a large bubble as a function of the IGM neutral fraction"></svg>
+            <div class="legend" id="l1"></div>
+          </div>
+          <div class="chart">
+            <h3>Bubble size distribution</h3>
+            <svg id="c2" viewBox="0 0 360 280" role="img" aria-label="Distribution of bubble sizes around the selected tracer and around random positions"></svg>
+            <div class="legend" id="l2"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="about">
+      <h2>How the numbers are computed</h2>
+      <p>The bubble size around a position is measured with the mean-free-path method: from the position, the distance to the first neutral cell is drawn along a random direction. Positions in neutral gas have a bubble size of zero. Each probability is the fraction of simulated galaxies, overdensities or random positions whose bubble size is at least the chosen radius. Bubble sizes in the simulation come on a grid of radii spaced by 10 per cent, so the probability changes in small steps as the radius is varied.</p>
+      <p>The two models bracket the sources of reionization. In the gradual model, numerous faint galaxies drive reionization and many small bubbles form around them. In the rapid model, only rarer, brighter galaxies emit ionizing photons, so bubbles are larger at fixed x<sub>HI</sub>. Overdensities count galaxies with M<sub>UV</sub> ≤ −19 (m<sub>AB</sub> ≈ 28 at z = 8) in a 4.84 arcmin<sup>2</sup> field with Δz = 0.2, about 2000 cMpc<sup>3</sup>, relative to the mean number in the simulation box.</p>
+      <p>Bubble size lists: <a href="https://sid.erda.dk/sharelink/EPDFBeVtfZ">public data on ERDA</a>, with an example notebook on <a href="https://github.com/ting-yi-lu/bubble_size_overdensities_paper">GitHub</a>. If you use these numbers, please cite <a href="https://academic.oup.com/mnras/article/528/3/4872/7589722">Lu et al. 2024, MNRAS, 528, 4872</a>.</p>
+    </section>
+  </main>
+
+  <footer>&copy; Ting-Yi Lu</footer>
+  <script src="assets/site.js"></script>
+  <script src="assets/bubble_prob_data.js"></script>
+  <script src="assets/bubble_prob.js"></script>
+</body>
+</html>
